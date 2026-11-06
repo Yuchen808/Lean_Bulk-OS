@@ -1,0 +1,418 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#0b0b0b" media="(prefers-color-scheme: dark)">
+<meta name="theme-color" content="#f5f5f5" media="(prefers-color-scheme: light)">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Lean Bulk">
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="icon-180.png">
+<link rel="icon" href="icon.svg" type="image/svg+xml">
+<title>Lean Bulk OS</title>
+<style>
+:root{
+  --paper:#f5f5f5;--card:#ffffff;--ink:#111111;--muted:#6b6b6b;--soft:#9a9a9a;
+  --rule:rgba(0,0,0,.09);--rule2:rgba(0,0,0,.16);--accent:#e5352b;--fill:#111111;--onfill:#ffffff;
+  --done:#111111;
+}
+@media (prefers-color-scheme: dark){
+  :root{--paper:#0b0b0b;--card:#151515;--ink:#eaeaea;--muted:#a6a6a6;--soft:#8c8c8c;
+  --rule:rgba(255,255,255,.08);--rule2:rgba(255,255,255,.16);--accent:#ff3b30;--fill:#eaeaea;--onfill:#0b0b0b;--done:#eaeaea;}
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;background:var(--paper);color:var(--ink)}
+body{font:15px/1.45 -apple-system,BlinkMacSystemFont,"SF Pro Text","PingFang SC","Helvetica Neue",sans-serif;
+  padding:calc(env(safe-area-inset-top) + 8px) 16px calc(env(safe-area-inset-bottom) + 84px);max-width:520px;margin:0 auto}
+.num{font-variant-numeric:tabular-nums}
+h1{font-size:13px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin:10px 0 2px}
+.date{font-size:28px;font-weight:700;letter-spacing:-.02em;margin:0 0 14px}
+.card{background:var(--card);border:1px solid var(--rule);border-radius:12px;padding:14px 14px;margin:0 0 12px}
+.lbl{font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);font-weight:600}
+.row{display:flex;align-items:center;gap:10px}
+.between{justify-content:space-between}
+.big{font-size:34px;font-weight:700;letter-spacing:-.02em}
+.mid{font-size:20px;font-weight:650}
+.sub{font-size:13px;color:var(--muted)}
+.stats{display:grid;grid-template-columns:1.2fr 1fr 1fr;gap:0;margin-top:10px;border-top:1px solid var(--rule);padding-top:10px}
+.stats>div+div{border-left:1px solid var(--rule);padding-left:12px}
+input[type=number],input[type=text],select{font:inherit;color:var(--ink);background:transparent;border:1px solid var(--rule2);border-radius:8px;padding:9px 10px;min-width:0}
+input:focus,select:focus{outline:2px solid var(--ink);outline-offset:-1px}
+button{font:inherit;color:var(--ink);background:transparent;border:1px solid var(--rule2);border-radius:8px;padding:9px 12px;cursor:pointer}
+button.solid{background:var(--fill);color:var(--onfill);border-color:var(--fill);font-weight:600}
+button.ghost{border-color:transparent;color:var(--muted);padding:6px 8px}
+.seg{display:inline-flex;border:1px solid var(--rule2);border-radius:8px;overflow:hidden}
+.seg button{border:0;border-radius:0;padding:6px 12px;font-size:13px}
+.seg button.on{background:var(--fill);color:var(--onfill)}
+.meal{display:flex;align-items:center;gap:12px;padding:11px 0;border-top:1px solid var(--rule)}
+.meal:first-of-type{border-top:0}
+.chk{width:28px;height:28px;flex:0 0 28px;border-radius:50%;border:1.5px solid var(--rule2);display:grid;place-items:center;padding:0;background:transparent}
+.chk.on{background:var(--done);border-color:var(--done)}
+.chk.on::after{content:"";width:10px;height:6px;border:2px solid var(--onfill);border-top:0;border-right:0;transform:translateY(-1px) rotate(-45deg)}
+.meal .t{flex:1;min-width:0}
+.meal .n{font-weight:600}
+.meal .d{font-size:12.5px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.meal .p{font-size:13px;color:var(--muted);white-space:nowrap}
+.bar{height:6px;background:var(--rule);border-radius:3px;overflow:hidden;margin-top:8px;position:relative}
+.bar i{display:block;height:100%;background:var(--ink);border-radius:3px}
+.bar b{position:absolute;top:-3px;bottom:-3px;width:1px;background:var(--muted)}
+.verdict{border-color:var(--accent)}
+.verdict .lbl{color:var(--accent)}
+.pill{display:inline-block;font-size:11px;padding:2px 7px;border:1px solid var(--rule2);border-radius:4px;color:var(--muted)}
+.chips{display:flex;flex-wrap:wrap;gap:8px;margin-top:8px}
+.chips button{padding:6px 10px;font-size:13px}
+.ex{padding:12px 0;border-top:1px solid var(--rule)}
+.ex:first-of-type{border-top:0}
+.ex .top{display:flex;justify-content:space-between;gap:8px;align-items:baseline}
+.ex .name{font-weight:600}
+.ex .rng{font-size:12px;color:var(--muted);white-space:nowrap}
+.ex .hint{font-size:12.5px;color:var(--muted);margin-top:4px}
+.ex .hint.up{color:var(--ink);font-weight:600}
+.step{display:flex;align-items:center;border:1px solid var(--rule2);border-radius:8px;overflow:hidden}
+.step button{border:0;border-radius:0;padding:8px 11px;color:var(--muted)}
+.step span{min-width:52px;text-align:center;font-weight:600}
+.ctl{display:flex;align-items:center;gap:8px;margin-top:8px}
+.x{color:var(--muted)}
+nav{position:fixed;left:0;right:0;bottom:0;background:color-mix(in srgb,var(--paper) 88%,transparent);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);border-top:1px solid var(--rule);display:flex;justify-content:center;padding:6px 8px calc(env(safe-area-inset-bottom) + 6px)}
+nav div{display:flex;width:100%;max-width:520px}
+nav button{flex:1;border:0;font-size:12px;color:var(--soft);padding:8px 0}
+nav button.on{color:var(--ink);font-weight:650}
+.sheet{position:fixed;inset:0;background:rgba(0,0,0,.35);display:flex;align-items:flex-end;justify-content:center;z-index:9}
+.sheet>div{background:var(--card);width:100%;max-width:520px;border-radius:14px 14px 0 0;padding:16px 16px calc(env(safe-area-inset-bottom) + 16px);max-height:85vh;overflow:auto}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+svg text{fill:var(--muted);font-size:10px}
+.hidden{display:none}
+.list{font-size:13.5px}
+.list .r{display:flex;justify-content:space-between;padding:7px 0;border-top:1px solid var(--rule)}
+.list .r:first-child{border-top:0}
+.foot{font-size:12px;color:var(--soft);margin-top:18px;text-align:center}
+</style>
+</head>
+<body>
+<main id="app"></main>
+<nav><div>
+  <button data-tab="today" class="on">今天</button>
+  <button data-tab="train">训练</button>
+  <button data-tab="trend">趋势</button>
+  <button data-tab="set">设置</button>
+</div></nav>
+<div id="sheet"></div>
+
+<script>
+/* ---------- 数据 ---------- */
+const KEY='lbos.v1';
+// 每 100g 生重
+const SRC={
+  cb:{n:'鸡胸',p:24,f:1.5,k:110,A:130,B:165},
+  ct:{n:'去皮鸡腿',p:20,f:5,k:125,A:152,B:192},
+  pm5:{n:'猪肉末 5%',p:21,f:5,k:130,A:140,B:180},
+  pm10:{n:'猪肉末 10%',p:19.5,f:10,k:175,A:152,B:192},
+  pt:{n:'猪里脊',p:22,f:3,k:120,A:138,B:178},
+  sal:{n:'三文鱼',p:20,f:13,k:200,A:142,B:182,fish:1,oily:1},
+  basa:{n:'巴沙鱼',p:15,f:3,k:90,A:182,B:230,fish:1}
+};
+// 220g 熟米饭 + 200g 蔬菜 + 10ml 油
+const BASE={p:8.9,c:72,f:10.1,k:427,fib:6.9};
+const FIXED={
+  pre:{n:'练前',time:'05:40',d:'香蕉 + 全麦吐司',p:4,c:43,f:1,k:200,fib:3.5},
+  bfast:{n:'早餐',time:'07:30',d:'1 蛋 · 250ml 蛋白液 · 60g 燕麦 · 200ml 奶',p:46,c:48,f:12.6,k:511,fib:6},
+  snack:{n:'Skyr',time:'15:00',d:'150g Skyr',p:16,c:6,f:0.3,k:95,fib:0}
+};
+const EXTRAS=[
+  {n:'香蕉',p:1.3,c:27,f:.4,k:105,fib:3},
+  {n:'苹果',p:.4,c:25,f:.3,k:95,fib:4},
+  {n:'30g 杏仁',p:6.3,c:6.5,f:15,k:175,fib:3},
+  {n:'贝果',p:10,c:50,f:1.5,k:260,fib:2.5},
+  {n:'150g 米饭',p:4,c:42,f:.4,k:195,fib:.6},
+  {n:'全麦吐司',p:4,c:18,f:1,k:95,fib:3}
+];
+const WEEK_ROT={1:['cb','pm5'],2:['cb','sal'],3:['pm5','cb'],4:['cb','cb'],5:['pm5','cb'],6:['cb','basa'],0:['cb','pm5']};
+// 训练课表（double progression：最后一组次数到上限 → 下次加重）
+const PLAN={
+  D1:{n:'全身 A',ex:[
+    ['d1a','平板哑铃卧推',6,8,2],['d1b','高位下拉',8,10,2.5],['d1c','史密斯深蹲 / 腿举',8,10,2.5],
+    ['d1d','哑铃侧平举',10,12,1],['d1e','绳索过头三头伸展',10,12,2.5]]},
+  D2:{n:'全身 B',ex:[
+    ['d2a','高倾角史密斯推举',8,10,2.5],['d2b','哑铃单臂划船',8,10,2],['d2c','RDL（哑铃 / 史密斯）',6,8,2.5],
+    ['d2d','绳索 EZ 杆弯举',10,12,2.5],['d2e','腿举提踵',12,15,5]]},
+  D3:{n:'全身 C',ex:[
+    ['d3a','史密斯平推',8,10,2.5],['d3b','反握高位下拉',8,10,2.5],['d3c','哑铃登箱 / 箭步蹲',8,10,2],
+    ['d3d','绳索面拉',12,15,2.5],['d3e','绳索卷腹',12,15,2.5]]},
+  D4:{n:'全身 D',ex:[
+    ['d4a','哑铃坐姿推肩',8,10,2],['d4b','单臂划船（哑铃 / 绳索）',8,10,2],['d4c','卧姿腿弯举 / 早安式',10,12,2],
+    ['d4d','哑铃锤式弯举',10,12,1],['d4e','绳索三头下压',10,12,2.5]]}
+};
+const OLD=[['杠铃深蹲',71.3,6],['卧推',61.3,9],['硬拉',81.3,8]];
+
+function load(){
+  let s=null;try{s=JSON.parse(localStorage.getItem(KEY))}catch(e){}
+  return Object.assign({v:1,days:{},sessions:[],custom:[],
+    settings:{prot:140,kcal:2550,trainDays:[1,2,4,5]}},s||{});
+}
+let S=load();
+function save(){try{localStorage.setItem(KEY,JSON.stringify(S))}catch(e){toast('本地存储不可用，请导出备份')}}
+
+/* ---------- 日期 ---------- */
+const pad=n=>String(n).padStart(2,'0');
+const iso=d=>`${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;
+const parse=s=>{const[a,b,c]=s.split('-').map(Number);return new Date(a,b-1,c)};
+const addD=(s,n)=>{const d=parse(s);d.setDate(d.getDate()+n);return iso(d)};
+const TODAY=()=>iso(new Date());
+const WD='日一二三四五六';
+const monday=s=>{const d=parse(s);const k=(d.getDay()+6)%7;d.setDate(d.getDate()-k);return iso(d)};
+
+function day(s){
+  if(!S.days[s]){
+    const wd=parse(s).getDay();
+    const [l,d]=WEEK_ROT[wd];
+    S.days[s]={tpl:(wd===0||wd===6)?'B':'A',train:S.settings.trainDays.includes(wd),
+      meals:{lunch:{src:l},dinner:{src:d}},done:{},extras:[]};
+  }
+  return S.days[s];
+}
+
+/* ---------- 计算 ---------- */
+function mainMeal(D,key){
+  const m=D.meals[key];const src=SRC[m.src];
+  const g=m.g!=null?m.g:src[D.tpl];
+  return {g,p:BASE.p+src.p*g/100,c:BASE.c,f:BASE.f+src.f*g/100,k:BASE.k+src.k*g/100,fib:BASE.fib};
+}
+function slots(D){
+  const out=[];
+  if(D.train)out.push(['pre',FIXED.pre]);
+  out.push(['bfast',FIXED.bfast]);
+  const L=mainMeal(D,'lunch');out.push(['lunch',{n:'午餐',time:'12:30',d:`${SRC[D.meals.lunch.src].n} ${L.g}g 生重 · 米饭 220g 熟`,...L}]);
+  if(D.tpl==='A')out.push(['snack',FIXED.snack]);
+  const N=mainMeal(D,'dinner');out.push(['dinner',{n:'晚餐',time:'19:00',d:`${SRC[D.meals.dinner.src].n} ${N.g}g 生重 · 米饭 220g 熟`,...N}]);
+  return out;
+}
+function totals(D){
+  const t={p:0,c:0,f:0,k:0,fib:0},plan={p:0,k:0};
+  for(const[k,m]of slots(D)){plan.p+=m.p;plan.k+=m.k;if(D.done[k])for(const x in t)t[x]+=m[x]||0}
+  for(const e of D.extras)for(const x in t)t[x]+=e[x]||0;
+  return {t,plan};
+}
+function weights(){return Object.entries(S.days).filter(([,d])=>d.w).map(([s,d])=>[s,d.w]).sort((a,b)=>a[0]<b[0]?-1:1)}
+function avg7(end){
+  const from=addD(end,-6);const ws=weights().filter(([s])=>s>=from&&s<=end).map(x=>x[1]);
+  return ws.length?ws.reduce((a,b)=>a+b,0)/ws.length:null;
+}
+function weekAvg(mon){
+  const end=addD(mon,6);const ws=weights().filter(([s])=>s>=mon&&s<=end).map(x=>x[1]);
+  return ws.length>=3?{a:ws.reduce((a,b)=>a+b,0)/ws.length,n:ws.length}:null;
+}
+function verdict(ref){
+  const m0=monday(ref),m1=addD(m0,-7),m2=addD(m0,-14);
+  const w0=weekAvg(m0),w1=weekAvg(m1),w2=weekAvg(m2);
+  if(!w0||!w1)return{t:'数据不够',d:'每周至少 3 次晨重，连续两周后才出结论。',delta:null};
+  const d0=w0.a-w1.a,d1=w2?w1.a-w2.a:null;
+  const firstWeeks=weights().length&&weights()[0][0]>=addD(m0,-21);
+  if(d0<-0.1)return{t:'复查饮食与是否生病',d:'均重在降。先看这周有没有漏餐、生病或活动量变大。',delta:d0};
+  if(d0>0.35&&(d1==null||d1>0.35))return{t:firstWeeks?'先观察':'复查热量与腰围',d:firstWeeks?'刚恢复训练，糖原和水分会让体重先跳一下，不等于长脂肪。':'连续涨太快。量一下腰围，看看是不是加餐偏多。',delta:d0};
+  if(d0<0.05&&d1!=null&&d1<0.05)return{t:'每天 +100–150 kcal',d:'两周没涨。最省事：每天加一份 +150g 米饭，或者一个香蕉加一把杏仁。',delta:d0};
+  if(d0<0.05)return{t:'保持，再看一周',d:'这周没涨，下周还不涨再加饭。',delta:d0};
+  return{t:'保持',d:'在目标速度内（+0.1–0.2 kg/周），照常吃。',delta:d0};
+}
+const e1rm=(w,r)=>w*(1+r/30);
+function lastSet(id){for(let i=S.sessions.length-1;i>=0;i--){const x=S.sessions[i].sets[id];if(x)return x}return null}
+function nextDay(){const l=S.sessions[S.sessions.length-1];if(!l)return'D1';const n=+l.day[1]%4+1;return'D'+n}
+
+/* ---------- 渲染 ---------- */
+const $=s=>document.querySelector(s);
+const f1=n=>n==null?'—':n.toFixed(1);
+const f0=n=>Math.round(n);
+let TAB='today',VIEW=TODAY(),TD=null,DRAFT=null;
+function toast(m){const e=document.createElement('div');e.textContent=m;e.style.cssText='position:fixed;left:50%;bottom:96px;transform:translateX(-50%);background:var(--fill);color:var(--onfill);padding:8px 14px;border-radius:8px;font-size:13px;z-index:20';document.body.appendChild(e);setTimeout(()=>e.remove(),1800)}
+
+function render(){
+  document.querySelectorAll('nav button').forEach(b=>b.classList.toggle('on',b.dataset.tab===TAB));
+  $('#app').innerHTML=({today:vToday,train:vTrain,trend:vTrend,set:vSet})[TAB]();
+}
+
+function vToday(){
+  const s=VIEW,D=day(s),d=parse(s);
+  const {t,plan}=totals(D);
+  const a7=avg7(s),a7p=avg7(addD(s,-7));
+  const isSun=d.getDay()===0;
+  const v=isSun?verdict(s):null;
+  const prot=S.settings.prot,pp=Math.min(100,t.p/ (prot*1.15)*100),pm=prot/(prot*1.15)*100;
+  const sameDay=s===TODAY();
+  let h=`<h1>Lean Bulk OS</h1>
+  <div class="row between"><div class="date">${d.getMonth()+1}月${d.getDate()}日 周${WD[d.getDay()]}</div>
+  <div class="row"><button class="ghost" data-a="prev">‹</button>${sameDay?'':'<button class="ghost" data-a="today">今天</button>'}<button class="ghost" data-a="next" ${sameDay?'disabled style="opacity:.3"':''}>›</button></div></div>`;
+  if(v)h+=`<div class="card verdict"><div class="lbl">本周结论</div><div class="mid" style="margin-top:4px">${v.t}</div><div class="sub" style="margin-top:4px">${v.d}${v.delta!=null?` 周变化 ${v.delta>=0?'+':''}${v.delta.toFixed(2)} kg。`:''}</div></div>`;
+  h+=`<div class="card"><div class="lbl">晨重</div>
+    <div class="row" style="margin-top:8px"><input id="w" type="number" inputmode="decimal" step="0.1" placeholder="${(weights().slice(-1)[0]||[0,68])[1]}" value="${D.w||''}" style="width:120px;font-size:22px;font-weight:700" class="num"><span class="sub">kg</span>
+    <button class="solid" data-a="w" style="margin-left:auto">${D.w?'更新':'记录'}</button></div>
+    <div class="stats num"><div><div class="lbl">7 天均重</div><div class="mid">${f1(a7)}</div></div>
+    <div><div class="lbl">比上周</div><div class="mid">${a7!=null&&a7p!=null?((a7-a7p>=0?'+':'')+(a7-a7p).toFixed(2)):'—'}</div></div>
+    <div><div class="lbl">目标</div><div class="mid">+0.15</div></div></div></div>`;
+  h+=`<div class="card"><div class="row between"><div class="lbl">吃了</div>
+    <div class="row"><button class="ghost" data-a="train" style="font-size:13px">${D.train?'训练日':'休息日'} ⇄</button>
+    <div class="seg"><button data-a="tpl" data-v="A" class="${D.tpl==='A'?'on':''}">A 下午加餐</button><button data-a="tpl" data-v="B" class="${D.tpl==='B'?'on':''}">B</button></div></div></div>`;
+  for(const[k,m]of slots(D)){
+    const main=k==='lunch'||k==='dinner';
+    h+=`<div class="meal"><button class="chk ${D.done[k]?'on':''}" data-a="eat" data-k="${k}" aria-label="${m.n}"></button>
+      <div class="t" ${main?`data-a="edit" data-k="${k}" style="cursor:pointer"`:''}><div class="n">${m.n} <span class="sub" style="font-weight:400">${m.time}</span></div><div class="d">${m.d}${main?' ›':''}</div></div>
+      <div class="p num">${f0(m.p)}g</div></div>`;
+  }
+  if(D.extras.length)h+=`<div class="meal"><div style="width:28px"></div><div class="t"><div class="n">额外</div><div class="d">${D.extras.map((e,i)=>`<span data-a="rmx" data-i="${i}" style="cursor:pointer">${e.n} ×</span>`).join(' · ')}</div></div><div class="p num">${f0(D.extras.reduce((a,e)=>a+e.p,0))}g</div></div>`;
+  h+=`<div class="chips">${[...EXTRAS,...S.custom].map((e,i)=>`<button data-a="addx" data-i="${i}">+ ${e.n}</button>`).join('')}</div></div>`;
+  h+=`<div class="card num"><div class="row between"><div class="lbl">蛋白</div><div class="sub">计划 ${f0(plan.p)}g</div></div>
+    <div class="row" style="align-items:baseline;gap:6px;margin-top:2px"><span class="big">${f0(t.p)}</span><span class="sub">/ ${prot} g</span></div>
+    <div class="bar"><i style="width:${pp}%"></i><b style="left:${pm}%"></b></div>
+    <div class="stats"><div><div class="lbl">热量</div><div class="mid">${f0(t.k)}</div><div class="sub">/ ${S.settings.kcal}</div></div>
+    <div><div class="lbl">碳水</div><div class="mid">${f0(t.c)}</div><div class="sub">g</div></div>
+    <div><div class="lbl">脂肪</div><div class="mid">${f0(t.f)}</div><div class="sub">g</div></div></div>
+    ${plan.k<S.settings.kcal-300?`<div class="sub" style="margin-top:10px">按模板吃满约 ${f0(plan.k)} kcal，比 ${S.settings.kcal} 少 ${f0(S.settings.kcal-plan.k)}。不用硬补；体重两周不涨时再从「额外」里加。</div>`:''}</div>`;
+  return h;
+}
+
+function vTrain(){
+  if(!DRAFT){TD=TD||nextDay();DRAFT={}}
+  const P=PLAN[TD];
+  let h=`<h1>训练</h1><div class="row between"><div class="date">${TD} · ${P.n}</div></div>
+  <div class="seg" style="margin-bottom:12px">${Object.keys(PLAN).map(k=>`<button data-a="td" data-v="${k}" class="${k===TD?'on':''}">${k}</button>`).join('')}</div>
+  <div class="card">`;
+  for(const[id,n,lo,hi,step]of P.ex){
+    const last=lastSet(id);
+    const cur=DRAFT[id]||{w:last?(last.r>=hi?+(last.w+step).toFixed(2):last.w):0,r:last?(last.r>=hi?lo:last.r):lo,ok:false};
+    DRAFT[id]=cur;
+    let hint='第一次：选一个能做 '+lo+'–'+hi+' 次、留 1–2 次余力的重量';
+    let up=false;
+    if(last){if(last.r>=hi){hint=`上次 ${last.w}kg × ${last.r} 到上限 → 今天 +${step}kg`;up=true}else hint=`上次 ${last.w}kg × ${last.r} → 今天争取 ${Math.min(hi,last.r+1)} 次`}
+    h+=`<div class="ex"><div class="top"><div class="name">${n}</div><div class="rng">${lo}–${hi} 次</div></div>
+      <div class="hint ${up?'up':''}">${hint}</div>
+      <div class="ctl num"><div class="step"><button data-a="st" data-id="${id}" data-f="w" data-d="${-step}">−</button><span>${cur.w}kg</span><button data-a="st" data-id="${id}" data-f="w" data-d="${step}">+</button></div>
+      <span class="x">×</span>
+      <div class="step"><button data-a="st" data-id="${id}" data-f="r" data-d="-1">−</button><span>${cur.r}</span><button data-a="st" data-id="${id}" data-f="r" data-d="1">+</button></div>
+      <button class="chk ${cur.ok?'on':''}" data-a="exok" data-id="${id}" style="margin-left:auto"></button></div></div>`;
+  }
+  const n=Object.values(DRAFT).filter(x=>x.ok).length;
+  h+=`</div><div class="sub" style="margin:-4px 2px 10px">记最后一组的重量和次数。最后一组到区间上限，下次就加重。</div>
+  <button class="solid" data-a="savesess" style="width:100%;padding:13px;${n?'':'opacity:.4'}" ${n?'':'disabled'}>保存 ${n}/${P.ex.length} 个动作</button>`;
+  const recent=S.sessions.slice(-5).reverse();
+  if(recent.length)h+=`<div class="card list" style="margin-top:14px"><div class="lbl" style="margin-bottom:4px">最近</div>${recent.map(x=>`<div class="r"><span>${x.date.slice(5)} · ${x.day}</span><span class="sub">${Object.keys(x.sets).length} 个动作</span></div>`).join('')}</div>`;
+  return h;
+}
+
+function spark(pts,w=320,hgt=70,goalA,goalB){
+  if(pts.length<2)return'<div class="sub">至少两个数据点才画线。</div>';
+  const xs=pts.map(p=>p[0]),ys=pts.map(p=>p[1]);
+  let lo=Math.min(...ys),hi=Math.max(...ys);if(hi-lo<0.6){const m=(hi+lo)/2;lo=m-.3;hi=m+.3}
+  const X=i=>34+(w-44)*i/(pts.length-1),Y=v=>hgt-12-(hgt-24)*(v-lo)/(hi-lo);
+  const d=pts.map((p,i)=>(i?'L':'M')+X(i).toFixed(1)+' '+Y(p[1]).toFixed(1)).join(' ');
+  return `<svg viewBox="0 0 ${w} ${hgt}" width="100%" height="${hgt}" preserveAspectRatio="none" style="display:block;margin-top:8px;color:var(--ink)">
+   <path d="${d}" fill="none" stroke="currentColor" stroke-width="1.6" vector-effect="non-scaling-stroke"/>
+   <circle cx="${X(pts.length-1)}" cy="${Y(ys[ys.length-1])}" r="3" fill="var(--accent)"/>
+   <text x="0" y="9">${hi.toFixed(1)}</text><text x="0" y="${hgt-1}">${lo.toFixed(1)}</text></svg>`;
+}
+
+function vTrend(){
+  const ws=weights();
+  const last=ws.length?ws[ws.length-1][0]:TODAY();
+  const pts=[];for(let i=55;i>=0;i--){const s=addD(last,-i);const a=avg7(s);if(a!=null&&S.days[s]&&S.days[s].w)pts.push([s,a])}
+  const v=verdict(TODAY());
+  let h=`<h1>趋势</h1><div class="date">体重与力量</div>
+  <div class="card verdict"><div class="lbl">本周结论</div><div class="mid" style="margin-top:4px">${v.t}</div><div class="sub" style="margin-top:4px">${v.d}</div></div>
+  <div class="card"><div class="row between"><div class="lbl">7 天均重 · 8 周</div><div class="sub num">${pts.length?f1(pts[pts.length-1][1])+' kg':''}</div></div>${spark(pts)}</div>`;
+  // 周表
+  const m0=monday(TODAY());let rows='';
+  for(let i=0;i<6;i++){const m=addD(m0,-7*i),w=weekAvg(m),p=weekAvg(addD(m,-7));
+    const sess=S.sessions.filter(x=>x.date>=m&&x.date<=addD(m,6)).length;
+    let pd=0,pn=0;for(let j=0;j<7;j++){const D=S.days[addD(m,j)];if(D&&Object.keys(D.done).length){pn++;if(totals(D).t.p>=130)pd++}}
+    rows+=`<div class="r num"><span>${m.slice(5)} 周</span><span>${w?w.a.toFixed(1):'—'}${w&&p?` <span class="sub">${(w.a-p.a>=0?'+':'')+(w.a-p.a).toFixed(2)}</span>`:''}</span><span class="sub">练 ${sess} · 蛋白达标 ${pd}/${pn}</span></div>`}
+  h+=`<div class="card list"><div class="lbl" style="margin-bottom:4px">每周</div>${rows}</div>`;
+  // 力量
+  let ex='';
+  for(const k in PLAN)for(const[id,n]of PLAN[k].ex){
+    const p=S.sessions.filter(s=>s.sets[id]).map(s=>[s.date,e1rm(s.sets[id].w,s.sets[id].r)]);
+    if(!p.length)continue;
+    const first=p[0][1],now=p[p.length-1][1];
+    ex+=`<div class="ex"><div class="top"><div class="name">${n}</div><div class="rng num">估算 1RM ${now.toFixed(1)}kg ${p.length>1?`<b style="color:var(--ink)">${now-first>=0?'+':''}${((now/first-1)*100).toFixed(0)}%</b>`:''}</div></div>${p.length>1?spark(p,320,44):''}</div>`;
+  }
+  h+=`<div class="card"><div class="lbl">力量 · 估算 1RM</div>${ex||'<div class="sub" style="margin-top:6px">还没有训练记录。</div>'}</div>
+  <div class="card list"><div class="lbl" style="margin-bottom:4px">停练前（杠铃，仅作参照）</div>${OLD.map(([n,w,r])=>`<div class="r num"><span>${n}</span><span class="sub">${w}kg × ${r} · 1RM ≈ ${e1rm(w,r).toFixed(0)}</span></div>`).join('')}<div class="sub" style="margin-top:6px">现在练的是史密斯和哑铃，数字不能直接比，看自己的曲线有没有往上走。</div></div>`;
+  return h;
+}
+
+function vSet(){
+  const st=S.settings;
+  return `<h1>设置</h1><div class="date">目标与数据</div>
+  <div class="card"><div class="grid2">
+    <label><div class="lbl">蛋白 g</div><input type="number" id="sp" value="${st.prot}" style="width:100%"></label>
+    <label><div class="lbl">热量 kcal</div><input type="number" id="sk" value="${st.kcal}" style="width:100%"></label></div>
+    <div class="lbl" style="margin-top:12px">默认训练日</div>
+    <div class="chips">${[1,2,3,4,5,6,0].map(i=>`<button data-a="tday" data-v="${i}" class="${st.trainDays.includes(i)?'solid':''}">周${WD[i]}</button>`).join('')}</div>
+    <button class="solid" data-a="saveset" style="margin-top:12px;width:100%">保存</button></div>
+  <div class="card"><div class="lbl">自定义食物（每份）</div>
+    <input id="cn" type="text" placeholder="名称，如 希腊酸奶 200g" style="width:100%;margin-top:8px">
+    <div class="grid2" style="margin-top:8px"><input id="cp" type="number" placeholder="蛋白 g"><input id="ck" type="number" placeholder="kcal"><input id="cc" type="number" placeholder="碳水 g"><input id="cf" type="number" placeholder="脂肪 g"></div>
+    <button data-a="addc" style="margin-top:8px;width:100%">添加</button>
+    ${S.custom.length?`<div class="list" style="margin-top:8px">${S.custom.map((c,i)=>`<div class="r"><span>${c.n}</span><span class="sub">${c.p}g · ${c.k}kcal <span data-a="rmc" data-i="${i}" style="cursor:pointer">删除</span></span></div>`).join('')}</div>`:''}</div>
+  <div class="card"><div class="lbl">数据只存在这台手机的浏览器里</div>
+    <div class="sub" style="margin-top:4px">换手机或清浏览器数据前先导出。建议每周日导出一次存进 iCloud。</div>
+    <div class="grid2" style="margin-top:10px"><button data-a="exp">导出 JSON</button><button data-a="imp">导入 JSON</button></div>
+    <input type="file" id="impf" accept="application/json" class="hidden"></div>
+  <div class="foot">肉按生重，米饭按熟重。不推荐蛋白粉，不做医疗判断。</div>`;
+}
+
+function editSheet(k){
+  const D=day(VIEW),m=D.meals[k],cur=mainMeal(D,k);
+  $('#sheet').innerHTML=`<div class="sheet" data-a="close"><div onclick="event.stopPropagation()">
+   <div class="row between"><div class="mid">${k==='lunch'?'午餐':'晚餐'}</div><button class="ghost" data-a="close">完成</button></div>
+   <div class="lbl" style="margin-top:12px">蛋白来源</div>
+   <div class="chips">${Object.entries(SRC).map(([id,s])=>`<button data-a="src" data-k="${k}" data-v="${id}" class="${m.src===id?'solid':''}">${s.n}</button>`).join('')}</div>
+   <div class="lbl" style="margin-top:14px">生重 g（${D.tpl} 模板建议 ${SRC[m.src][D.tpl]}g）</div>
+   <div class="ctl num"><div class="step"><button data-a="g" data-k="${k}" data-d="-10">−10</button><span>${cur.g}g</span><button data-a="g" data-k="${k}" data-d="10">+10</button></div>
+   <button class="ghost" data-a="g0" data-k="${k}">恢复建议</button></div>
+   <div class="sub num" style="margin-top:12px">这一餐 ≈ 蛋白 ${f0(cur.p)}g · ${f0(cur.k)} kcal（含 220g 熟米饭、200g 蔬菜、10ml 油）</div>
+  </div></div>`;
+}
+
+/* ---------- 交互 ---------- */
+document.addEventListener('click',e=>{
+  const nb=e.target.closest('nav button');if(nb){TAB=nb.dataset.tab;render();scrollTo(0,0);return}
+  const b=e.target.closest('[data-a]');if(!b)return;
+  const a=b.dataset.a,D=day(VIEW);
+  switch(a){
+    case'prev':VIEW=addD(VIEW,-1);break;
+    case'next':VIEW=addD(VIEW,1);break;
+    case'today':VIEW=TODAY();break;
+    case'w':{const v=parseFloat($('#w').value);if(!(v>30&&v<200))return toast('输入晨重 kg');D.w=Math.round(v*10)/10;save();toast('已记录 '+D.w+' kg');break}
+    case'tpl':D.tpl=b.dataset.v;delete D.meals.lunch.g;delete D.meals.dinner.g;save();break;
+    case'train':D.train=!D.train;if(!D.train)delete D.done.pre;save();break;
+    case'eat':D.done[b.dataset.k]=!D.done[b.dataset.k];if(!D.done[b.dataset.k])delete D.done[b.dataset.k];save();break;
+    case'edit':editSheet(b.dataset.k);return;
+    case'src':D.meals[b.dataset.k]={src:b.dataset.v};save();editSheet(b.dataset.k);render();return;
+    case'g':{const k=b.dataset.k;const g=mainMeal(D,k).g+ +b.dataset.d;D.meals[k].g=Math.max(0,g);save();editSheet(k);render();return}
+    case'g0':delete D.meals[b.dataset.k].g;save();editSheet(b.dataset.k);render();return;
+    case'close':$('#sheet').innerHTML='';break;
+    case'addx':{const e2=[...EXTRAS,...S.custom][+b.dataset.i];D.extras.push({...e2});save();break}
+    case'rmx':D.extras.splice(+b.dataset.i,1);save();break;
+    case'td':TD=b.dataset.v;DRAFT=null;break;
+    case'st':{const x=DRAFT[b.dataset.id],f=b.dataset.f;x[f]=Math.max(0,+(x[f]+ +b.dataset.d).toFixed(2));x.ok=true;break}
+    case'exok':DRAFT[b.dataset.id].ok=!DRAFT[b.dataset.id].ok;break;
+    case'savesess':{const sets={};for(const id in DRAFT)if(DRAFT[id].ok)sets[id]={w:DRAFT[id].w,r:DRAFT[id].r};
+      if(!Object.keys(sets).length)return;const dt=TODAY();S.sessions.push({date:dt,day:TD,sets});day(dt).train=true;save();toast(TD+' 已保存');TD=null;DRAFT=null;break}
+    case'tday':{const v=+b.dataset.v,t=S.settings.trainDays;const i=t.indexOf(v);i>=0?t.splice(i,1):t.push(v);break}
+    case'saveset':S.settings.prot=+$('#sp').value||140;S.settings.kcal=+$('#sk').value||2550;save();toast('已保存');break;
+    case'addc':{const n=$('#cn').value.trim();if(!n)return toast('写个名称');S.custom.push({n,p:+$('#cp').value||0,k:+$('#ck').value||0,c:+$('#cc').value||0,f:+$('#cf').value||0,fib:0});save();break}
+    case'rmc':S.custom.splice(+b.dataset.i,1);save();break;
+    case'exp':{const bl=new Blob([JSON.stringify(S,null,1)],{type:'application/json'});const u=URL.createObjectURL(bl);const l=document.createElement('a');l.href=u;l.download='lean-bulk-'+TODAY()+'.json';l.click();setTimeout(()=>URL.revokeObjectURL(u),2000);break}
+    case'imp':$('#impf').click();return;
+  }
+  render();
+});
+document.addEventListener('change',e=>{
+  if(e.target.id!=='impf')return;const f=e.target.files[0];if(!f)return;
+  f.text().then(t=>{try{const o=JSON.parse(t);if(!o.days)throw 0;if(!confirm('覆盖这台设备上的数据？'))return;S=Object.assign(load(),o);save();render();toast('已导入')}catch(_){toast('文件不对')}});
+});
+document.addEventListener('keydown',e=>{if(e.key==='Enter'&&e.target.id==='w'){document.querySelector('[data-a=w]').click()}});
+render();
+if('serviceWorker' in navigator&&location.protocol==='https:')navigator.serviceWorker.register('sw.js').catch(()=>{});
+</script>
+</body>
+</html>
