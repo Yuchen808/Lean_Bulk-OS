@@ -52,6 +52,12 @@
     go('train', '2026-11-08');
     ok('新一天保存后绿色', !!$$('.savedbox'), null);
 
+    // 7b. 日历：练过的日子有绿点和淡绿底
+    $$('.date.tap').click();
+    const c7=$$('.cal [data-v="2026-11-07"]');
+    ok('日历 11/7 有绿点和绿底', c7&&c7.querySelector('.dot')&&c7.classList.contains('tr'), c7&&c7.className);
+    $$('#sheet').innerHTML='';
+
     // 8. 体重两位小数 + 绿色
     go('today', '2026-11-08');
     $$('#w').value = '68.55'; $$('[data-a=w]').click();

@@ -85,6 +85,7 @@ button.ghost{border-color:transparent;color:var(--muted);padding:6px 8px}
 .cal .h{font-size:11px;color:var(--muted);text-align:center;padding:4px 0}
 .cal button{position:relative;border:1px solid transparent;padding:10px 0;font-size:15px}
 .cal button.today{border-color:var(--rule2)}
+.cal button.tr{background:var(--okbg);border-color:rgba(31,138,59,.18);border-radius:8px}
 .cal button.sel{background:var(--fill);color:var(--onfill);border-color:var(--fill)}
 .cal button[disabled]{opacity:.3}
 .cal .dot{position:absolute;top:4px;right:5px;width:7px;height:7px;border-radius:50%;background:var(--ok)}
@@ -494,7 +495,7 @@ function calSheet(){
   const trained=new Set(S.sessions.map(x=>x.date)),today=TODAY();
   let cells='';for(let i=0;i<lead;i++)cells+='<span></span>';
   for(let dd=1;dd<=n;dd++){const s=`${y}-${pad(m)}-${pad(dd)}`;
-    cells+=`<button data-a="pick" data-v="${s}" class="num ${s===VIEW?'sel':''} ${s===today?'today':''}" ${s>today?'disabled':''}>${dd}${trained.has(s)?'<i class="dot"></i>':''}</button>`}
+    cells+=`<button data-a="pick" data-v="${s}" class="num ${s===VIEW?'sel':''} ${s===today?'today':''} ${trained.has(s)?'tr':''}" ${s>today?'disabled':''}>${dd}${trained.has(s)?'<i class="dot"></i>':''}</button>`}
   const prev=iso(new Date(y,m-2,1)).slice(0,7),next=iso(new Date(y,m,1)).slice(0,7);
   $('#sheet').innerHTML=`<div class="sheet" data-a="close"><div>
     <div class="row between"><button class="ghost" data-a="cm" data-v="${prev}">‹</button><div class="mid">${y} 年 ${m} 月</div>
