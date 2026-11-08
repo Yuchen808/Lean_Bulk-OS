@@ -66,7 +66,7 @@
 
     // 8b. 碳水 / 脂肪显示目标
     const subs=[...document.querySelectorAll('.stats .sub')].map(x=>x.textContent);
-    ok('碳水和脂肪有目标值', subs.some(x=>/\/ 33\d g/.test(x))&&subs.some(x=>/\/ 7\d g/.test(x)), subs);
+    ok('目标 2500 / 碳水 ~314 / 脂肪 65', S.settings.kcal===2500&&subs.some(x=>/\/ 31\d g/.test(x))&&subs.some(x=>/\/ 65 g/.test(x)), subs);
 
     // 8c. 喝水 / 肌酸 / 维生素 D / 加餐 / 红薯
     go('today', '2026-11-08');

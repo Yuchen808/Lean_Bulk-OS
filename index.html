@@ -263,9 +263,10 @@ const OLD=[['杠铃深蹲',71.3,6],['卧推',61.3,9],['硬拉',81.3,8]];
 function load(){
   let s=null;try{s=JSON.parse(localStorage.getItem(KEY))}catch(e){}
   return Object.assign({v:1,days:{},sessions:[],custom:[],
-    settings:{prot:140,kcal:2550,trainDays:[1,2,4,5]}},s||{});
+    settings:{prot:165,kcal:2500,fat:65,trainDays:[1,2,4,5]}},s||{});
 }
 let S=load();
+if(!S.settings.v2){if(S.settings.kcal===2550&&S.settings.prot===140){S.settings.kcal=2500;S.settings.prot=165;S.settings.fat=65}S.settings.v2=1;try{localStorage.setItem(KEY,JSON.stringify(S))}catch(e){}}
 function save(){try{localStorage.setItem(KEY,JSON.stringify(S))}catch(e){toast('本地存储不可用，请导出备份')}}
 
 /* ---------- 日期 ---------- */
@@ -394,7 +395,7 @@ function render(){
   $('#app').innerHTML=({today:vToday,train:vTrain,trend:vTrend,set:vSet})[TAB]();
 }
 
-function macroGoal(){const k=S.settings.kcal,p=S.settings.prot,f=Math.round(k*0.25/9);return{f,c:Math.round((k-p*4-f*9)/4)}}
+function macroGoal(){const k=S.settings.kcal,p=S.settings.prot,f=S.settings.fat||Math.round(k*0.22/9);return{f,c:Math.round((k-p*4-f*9)/4)}}
 function vToday(){
   const s=VIEW,D=day(s),d=parse(s);
   const {t,plan}=totals(D);
@@ -591,7 +592,7 @@ function vSet(){
     <div class="sub" style="margin-top:4px">换手机或清浏览器数据前先导出。建议每周日导出一次存进 iCloud。</div>
     <div class="grid2" style="margin-top:10px"><button data-a="exp">导出 JSON</button><button data-a="imp">导入 JSON</button></div>
     <input type="file" id="impf" accept="application/json" class="hidden"></div>
-  <div class="sub" style="margin:-4px 2px 12px">碳水和脂肪目标自动算：脂肪约占热量 25%，剩下的热量扣掉蛋白都给碳水。</div>
+  <div class="sub" style="margin:-4px 2px 12px">脂肪目标 65g（约占 23%），热量扣掉蛋白和脂肪，剩下的都给碳水。</div>
   <div class="foot">肉按生重，米饭按熟重。不推荐蛋白粉，不做医疗判断。</div>`;
 }
 
