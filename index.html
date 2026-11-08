@@ -240,7 +240,8 @@ const PLAN={
 // 可替换动作：同一个位置换成别的动作，各自记各自的进度
 const ALT={
   d2b:[['d2b_scr','坐姿绳索划船',8,10,2.5]],
-  d2d:[['d2d_uc','单臂绳索弯举',10,12,1.25]]
+  d2d:[['d2d_uc','单臂绳索弯举',10,12,1.25],['d2d_db','哑铃弯举',10,12,1]],
+  d2e:[['d2e_lp','腿举',8,12,5]]
 };
 // 单侧动作：左右各记一组
 const UNI=new Set(['d2b','d2d_uc','d4b']);
@@ -326,6 +327,7 @@ function verdict(ref){
 }
 const e1rm=(w,r)=>w*(1+r/30);
 function lastSet(id,before){for(let i=S.sessions.length-1;i>=0;i--){const ss=S.sessions[i];if(before&&ss.date>=before)continue;const x=ss.sets[id];if(x)return x}return null}
+function lastUsed(ids,before){for(let i=S.sessions.length-1;i>=0;i--){const ss=S.sessions[i];if(before&&ss.date>=before)continue;for(const id of ids)if(ss.sets[id])return id}return null}
 function nextDay(before){for(let i=S.sessions.length-1;i>=0;i--){const ss=S.sessions[i];if(before&&ss.date>=before)continue;if(PLAN[ss.day])return'D'+(+ss.day[1]%4+1)}return'D1'}
 // Strong 动作名 → 这里的动作；没对上的按 Strong 原名单独记
 const STRONG_MAP={
@@ -333,7 +335,7 @@ const STRONG_MAP={
   'Squat (Smith Machine)':'d1c','Lateral Raise (Dumbbell)':'d1d','Triceps Extension (Cable)':'d1e',
   'Incline Bench Press (Smith Machine)':'d2a','Bent Over One Arm Row (Dumbbell)':'d2b',
   'Seated Wide-Grip Row (Cable)':'d2b_scr','Seated Row (Cable)':'d2b_scr',
-  'Romanian Deadlift (Dumbbell)':'d2c','Bicep Curl (Cable)':'d2d','Calf Press on Leg Press':'d2e',
+  'Romanian Deadlift (Dumbbell)':'d2c','Bicep Curl (Cable)':'d2d','Bicep Curl (Dumbbell)':'d2d_db','Leg Press':'d2e_lp','Calf Press on Leg Press':'d2e',
   'Bench Press (Smith Machine)':'d3a','Lunge (Dumbbell)':'d3c','Dumbbell Step Up':'d3c',
   'Face Pull (Cable)':'d3d','Cable Crunch':'d3e',
   'Seated Overhead Press (Dumbbell)':'d4a','Lying Leg Curl (Machine)':'d4c',
@@ -370,7 +372,7 @@ function importStrong(text){
 const $=s=>document.querySelector(s);
 const f1=n=>n==null?'—':n.toFixed(1);
 const f0=n=>Math.round(n);
-let TAB='today',VIEW=TODAY(),TD=null,DRAFT=null,DIRTY=false;
+let TAB='today',VIEW=TODAY(),TD=null,DRAFT=null,DIRTY=false,OVR={};
 function toast(m){const e=document.createElement('div');e.textContent=m;e.style.cssText='position:fixed;left:50%;bottom:96px;transform:translateX(-50%);background:var(--fill);color:var(--onfill);padding:8px 14px;border-radius:8px;font-size:13px;z-index:20';document.body.appendChild(e);setTimeout(()=>e.remove(),1800)}
 
 function render(){
@@ -446,9 +448,10 @@ function vTrain(){
     <div class="seg">${Object.keys(PLAN).map(k=>`<button data-a="td" data-v="${k}" class="${k===TD?'on':''}">${k}</button>`).join('')}</div></div>
     <div class="card">`;
     const alt=S.settings.alt||(S.settings.alt={});
+    const shown=new Set();
     for(const base of P.ex){
       const opts=[base,...(ALT[base[0]]||[])];
-      const [id,n,lo,hi,step]=opts.find(o=>o[0]===alt[base[0]])||base;
+      const [id,n,lo,hi,step]=opts.find(o=>savedSets[o[0]])||opts.find(o=>o[0]===OVR[base[0]])||opts.find(o=>o[0]===lastUsed(opts.map(x=>x[0]),VIEW))||opts.find(o=>o[0]===alt[base[0]])||base;shown.add(id);
       const uni=UNI.has(id),last=lastSet(id,VIEW),rec=savedSets[id];
       const lr=last?Math.min(last.r,last.rR!=null?last.rR:last.r):0;
       const nw=w=>last?(lr>=hi?+(w+step).toFixed(2):w):0;
@@ -469,10 +472,13 @@ function vTrain(){
         <div class="hint ${up?'up':''}">${hint}</div>
         ${uni?ctl('w','r','左')+ctl('wR','rR','右'):ctl('w','r','')}</div>`;
     }
+    const extra=Object.keys(savedSets).filter(id=>!shown.has(id));
+    if(extra.length){const nm=id=>{const e=ALL_EX.find(x=>x[0]===id);return e?e[1]:(S.exNames||{})[id]||id.replace(/^sx:/,'')};
+      h+=`<div class="ex"><div class="lbl">这天还练了</div>${extra.map(id=>{const r=savedSets[id];return `<div class="row between" style="padding:6px 0"><span class="name">${nm(id)}</span><span class="sub num">${r.all?r.all.map(a=>a[0]+'×'+a[1]).join(' · '):r.w+'kg × '+r.r}</span></div>`}).join('')}</div>`}
     const n=Object.values(DRAFT).filter(x=>x.ok).length;
     h+=`</div><div class="sub" style="margin:-4px 2px 10px">记正式组的平均重量和平均次数（热身组不算），数字可以直接点进去输入。平均次数到区间上限，下次就加重。</div>
     ${done.some(x=>x.day===TD)&&!DIRTY
-      ?`<div class="savedbox">✓ 已保存 · ${TD} · ${Object.values(DRAFT).filter(x=>x.ok).length} 个动作</div>`
+      ?`<div class="savedbox">✓ 已保存 · ${TD} · ${Object.keys(savedSets).length} 个动作</div>`
       :`<button class="solid" data-a="savesess" style="width:100%;padding:13px;${n?'':'opacity:.4'}" ${n?'':'disabled'}>${done.some(x=>x.day===TD)?'保存修改':'保存'} ${n}/${P.ex.length} 个动作</button>`}`;
   }
   const recent=S.sessions.slice(-5).reverse();
@@ -710,7 +716,7 @@ document.addEventListener('click',e=>{
 document.addEventListener('change',e=>{
   if(e.target.id==='strongf'){const f=e.target.files[0];if(!f)return;f.text().then(t=>{try{const r=importStrong(t);render();
     toast(`导入 ${r.n} 次训练`+(r.unmapped.length?`，${r.unmapped.length} 个动作按原名单独记`:''))}catch(err){toast(err.message||'文件不对')}});return}
-  if(e.target.classList.contains('exsel')){const alt=S.settings.alt||(S.settings.alt={});const slot=e.target.dataset.slot;const old=alt[slot]||slot;if(DRAFT)delete DRAFT[old];alt[slot]=e.target.value;save();render();return}
+  if(e.target.classList.contains('exsel')){const alt=S.settings.alt||(S.settings.alt={});const slot=e.target.dataset.slot;const old=alt[slot]||slot;if(DRAFT)delete DRAFT[old];alt[slot]=e.target.value;OVR[slot]=e.target.value;save();render();return}
   if(e.target.classList.contains('trin')){const x=DRAFT&&DRAFT[e.target.dataset.id],v=parseFloat(e.target.value);if(x&&v>=0){x[e.target.dataset.f]=/^r/.test(e.target.dataset.f)?Math.round(v*10)/10:v;x.ok=true;DIRTY=true}render();return}
   if(e.target.classList.contains('vsel')){const D=day(VIEW),it=clone(getItems(D,EK));it[+e.target.dataset.i][0]=e.target.value;setItems(D,EK,it);editItems(EK);render();return}
   if(e.target.classList.contains('iin')){const D=day(VIEW),it=clone(getItems(D,EK)),v=parseFloat(e.target.value);
@@ -720,6 +726,7 @@ document.addEventListener('change',e=>{
 });
 document.addEventListener('input',e=>{if(e.target.id==='w')e.target.classList.toggle('saved',e.target.value!==''&&parseFloat(e.target.value)===parseFloat(e.target.dataset.saved))});
 document.addEventListener('keydown',e=>{if(e.key==='Enter'&&e.target.id==='w'){document.querySelector('[data-a=w]').click()}});
+for(const x of S.sessions)for(const k of Object.keys(x.sets))if(k.startsWith('sx:')&&STRONG_MAP[k.slice(3)]){const nk=STRONG_MAP[k.slice(3)];if(!x.sets[nk])x.sets[nk]=x.sets[k];delete x.sets[k]}
 const SEED_1107=`Date,Workout Name,Duration,Exercise Name,Set Order,Weight,Reps,Distance,Seconds,RPE\n2026-11-07 12:39:17,"Whole Body_1B",49m,"Incline Bench Press (Smith Machine)",W,10.3,10.0,0,0.0,\n2026-11-07 12:39:17,"Whole Body_1B",49m,"Incline Bench Press (Smith Machine)",W,31.3,5.0,0,0.0,\n2026-11-07 12:39:17,"Whole Body_1B",49m,"Incline Bench Press (Smith Machine)",W,41.3,3.0,0,0.0,\n2026-11-07 12:39:17,"Whole Body_1B",49m,"Incline Bench Press (Smith Machine)",1,41.3,7.0,0,0.0,\n2026-11-07 12:39:17,"Whole Body_1B",49m,"Incline Bench Press (Smith Machine)",2,41.3,6.0,0,0.0,\n2026-11-07 12:39:17,"Whole Body_1B",49m,"Incline Bench Press (Smith Machine)",3,41.3,4.0,0,0.0,\n2026-11-07 12:39:17,"Whole Body_1B",49m,"Seated Wide-Grip Row (Cable)",1,24.9,12.0,0,0.0,\n2026-11-07 12:39:17,"Whole Body_1B",49m,"Seated Wide-Grip Row (Cable)",2,27.2,12.0,0,0.0,\n2026-11-07 12:39:17,"Whole Body_1B",49m,"Seated Wide-Grip Row (Cable)",3,29.5,7.0,0,0.0,\n2026-11-07 12:39:17,"Whole Body_1B",49m,"Romanian Deadlift (Dumbbell)",1,36.0,10.0,0,0.0,\n2026-11-07 12:39:17,"Whole Body_1B",49m,"Romanian Deadlift (Dumbbell)",2,45.0,11.0,0,0.0,\n2026-11-07 12:39:17,"Whole Body_1B",49m,"Romanian Deadlift (Dumbbell)",3,45.0,13.0,0,0.0,\n2026-11-07 12:39:17,"Whole Body_1B",49m,"Bicep Curl (Dumbbell)",1,6.8,10.0,0,0.0,\n2026-11-07 12:39:17,"Whole Body_1B",49m,"Bicep Curl (Dumbbell)",2,6.8,7.0,0,0.0,\n2026-11-07 12:39:17,"Whole Body_1B",49m,"Bicep Curl (Dumbbell)",3,6.8,8.0,0,0.0,\n2026-11-07 12:39:17,"Whole Body_1B",49m,"Bicep Curl (Dumbbell)",4,6.8,5.0,0,0.0,\n2026-11-07 12:39:17,"Whole Body_1B",49m,"Bicep Curl (Dumbbell)",D,6.8,7.0,0,0.0,\n2026-11-07 12:39:17,"Whole Body_1B",49m,"Bicep Curl (Dumbbell)",D,4.5,6.0,0,0.0,\n2026-11-07 12:39:17,"Whole Body_1B",49m,"Leg Press",W,91.0,8.0,0,0.0,\n2026-11-07 12:39:17,"Whole Body_1B",49m,"Leg Press",W,114.0,5.0,0,0.0,\n2026-11-07 12:39:17,"Whole Body_1B",49m,"Leg Press",1,125.0,8.0,0,0.0,\n2026-11-07 12:39:17,"Whole Body_1B",49m,"Leg Press",2,120.0,7.0,0,0.0,\n2026-11-07 12:39:17,"Whole Body_1B",49m,"Leg Press",3,114.0,10.0,0,0.0,`;
 if(!S.sessions.some(x=>x.ts==='2026-11-07 12:39:17')){try{importStrong(SEED_1107)}catch(e){}}
 render();
