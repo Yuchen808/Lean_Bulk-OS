@@ -136,11 +136,12 @@ const FOOD={
   sd:{n:'Sourdough',unit:'g',step:25,def:50,p:9,c:50,f:1.5,k:260,fib:3},
   ban:{n:'香蕉',unit:'根',per:120,step:.5,def:1,p:1.1,c:23,f:.3,k:89,fib:2.6},
   pb:{n:'花生酱',unit:'g',step:5,def:15,p:25,c:13,f:50,k:600,fib:6},
+  oil:{n:'油',unit:'ml',step:5,def:5,p:0,c:0,f:91,k:820,fib:0},
   skyr:{n:'Skyr',unit:'g',step:50,def:150,p:11,c:4,f:.2,k:63,fib:0}
 };
 const BF_PRESETS=[
   {n:'燕麦蛋白',items:[['egg',1],['ew',250],['oat',60],['milk',200]]},
-  {n:'3 全蛋',items:[['egg',3]]},
+  {n:'3 全蛋',items:[['egg',3],['oil',5]]},
   {n:'Sourdough + 香蕉 + 花生酱',items:[['sd',100],['ban',1],['pb',20]]}
 ];
 const WEEK_ROT={1:['cb','pm5'],2:['cb','sal'],3:['pm5','cb'],4:['cb','cb'],5:['pm5','cb'],6:['cb','basa'],0:['cb','pm5']};
