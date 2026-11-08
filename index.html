@@ -416,7 +416,7 @@ function vToday(){
   {const ml=D.water||0,goal=3500,pc=Math.min(100,ml/goal*100);
   h+=`<div class="card"><div class="row between"><div class="lbl">每天打卡</div><div class="sub num">${ml>=goal?'✓ ':''}水 ${(ml/1000).toFixed(2)} / 3.5 L</div></div>
     <div class="bar ${ml>=goal?'okbar':''}"><i style="width:${pc}%"></i></div>
-    <div class="chips"><button data-a="water" data-v="250">+ 250ml</button><button data-a="water" data-v="500">+ 500ml</button><button data-a="water" data-v="750">+ 750ml</button><button class="ghost" data-a="water" data-v="-250">− 250</button></div>
+    <div class="chips"><button class="solid" data-a="water" data-v="1000">+ 1 瓶（1L）</button><button data-a="water" data-v="250">+ 250ml</button><button data-a="water" data-v="500">+ 500ml</button><button data-a="water" data-v="750">+ 750ml</button><button class="ghost" data-a="water" data-v="-250">− 250</button></div>
     <div class="row" style="margin-top:10px;gap:18px"><label class="row" style="gap:8px"><button class="chk ${D.creatine?'on':''}" data-a="tick" data-v="creatine"></button>肌酸 5g</label>
     <label class="row" style="gap:8px"><button class="chk ${D.vitd?'on':''}" data-a="tick" data-v="vitd"></button>维生素 D 10µg</label></div></div>`;}
   h+=`<div class="card"><div class="row between"><div class="lbl">吃了</div>

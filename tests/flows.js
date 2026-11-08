@@ -72,6 +72,8 @@
     go('today', '2026-11-08');
     $$('[data-a=water][data-v="500"]').click(); $$('[data-a=water][data-v="750"]').click();
     ok('喝水累计 1.25L', day('2026-11-08').water === 1250, day('2026-11-08').water);
+    $$('[data-a=water][data-v="1000"]').click();
+    ok('+1 瓶 = 1L', day('2026-11-08').water === 2250, day('2026-11-08').water);
     $$('[data-a=tick][data-v=creatine]').click();
     ok('肌酸打卡', day('2026-11-08').creatine === true, null);
     const vd0 = totals(day('2026-11-08')).t.vd; $$('[data-a=tick][data-v=vitd]').click();
