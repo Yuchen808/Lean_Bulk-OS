@@ -139,6 +139,13 @@ const FOOD={
   oil:{n:'油',unit:'ml',step:5,def:5,p:0,c:0,f:91,k:820,fib:0},
   skyr:{n:'Skyr',unit:'g',step:50,def:150,p:11,c:4,f:.2,k:63,fib:0}
 };
+for(const id in SRC){const x=SRC[id];FOOD[id]={n:x.n,unit:'g',step:10,def:x.A,p:x.p,c:0,f:x.f,k:x.k,fib:0,raw:1}}
+Object.assign(FOOD,{
+  rice:{n:'米饭',unit:'g',step:20,def:220,p:2.7,c:28,f:.3,k:130,fib:.4,cooked:1},
+  veg:{n:'蔬菜',unit:'g',step:50,def:200,p:1.5,c:5,f:.2,k:25,fib:3}
+});
+const BF_IDS=['egg','ew','oat','milk','sd','ban','pb','oil','skyr'];
+const MEAT_IDS=Object.keys(SRC),SIDE_IDS=['rice','veg','oil','egg'];
 const BF_PRESETS=[
   {n:'燕麦蛋白',items:[['egg',1],['ew',250],['oat',60],['milk',200]]},
   {n:'3 全蛋',items:[['egg',3],['oil',5]]},
@@ -190,27 +197,25 @@ function day(s){
 }
 
 /* ---------- 计算 ---------- */
-function mainMeal(D,key){
-  const m=D.meals[key];const src=SRC[m.src];
-  const g=m.g!=null?m.g:src[D.tpl];
-  return {g,p:BASE.p+src.p*g/100,c:BASE.c,f:BASE.f+src.f*g/100,k:BASE.k+src.k*g/100,fib:BASE.fib};
-}
 const clone=a=>a.map(x=>[x[0],x[1]]);
-function bfItems(D){return D.bf||S.lastBf||BF_PRESETS[0].items}
 const fmtAmt=(id,a)=>{const F=FOOD[id];const v=+(+a).toFixed(1);return F.unit==='g'||F.unit==='ml'?`${v}${F.unit}`:`${v} ${F.unit}`};
-function bfMeal(D){
-  const items=bfItems(D),t={p:0,c:0,f:0,k:0,fib:0};
+const NAME={bfast:'早餐',lunch:'午餐',dinner:'晚餐'},TIME={bfast:'07:30',lunch:'12:30',dinner:'19:00'};
+function defMain(D,k){const m=D.meals[k];return [[m.src,m.g!=null?m.g:SRC[m.src][D.tpl]],['rice',220],['veg',200],['oil',10]]}
+function getItems(D,k){if(k==='bfast')return D.bf||S.lastBf||BF_PRESETS[0].items;return D.meals[k].items||defMain(D,k)}
+function setItems(D,k,it){if(k==='bfast'){D.bf=it;S.lastBf=clone(it)}else D.meals[k].items=it;save()}
+function meal(D,k){
+  const items=getItems(D,k),t={p:0,c:0,f:0,k:0,fib:0};
   for(const[id,a]of items){const F=FOOD[id];if(!F)continue;const g=a*(F.per||1);for(const x in t)t[x]+=F[x]*g/100}
-  const d=items.length?items.map(([id,a])=>`${FOOD[id].n} ${fmtAmt(id,a)}`).join(' · '):'还没选';
-  return {n:'早餐',time:'07:30',d,...t};
+  const d=items.length?items.map(([id,a])=>{const F=FOOD[id];return `${F.n} ${fmtAmt(id,a)}${F.raw?' 生':F.cooked?' 熟':''}`}).join(' · '):'还没选';
+  return {n:NAME[k],time:TIME[k],d,...t};
 }
 function slots(D){
   const out=[];
   if(D.train)out.push(['pre',FIXED.pre]);
-  out.push(['bfast',bfMeal(D)]);
-  const L=mainMeal(D,'lunch');out.push(['lunch',{n:'午餐',time:'12:30',d:`${SRC[D.meals.lunch.src].n} ${L.g}g 生重 · 米饭 220g 熟`,...L}]);
+  out.push(['bfast',meal(D,'bfast')]);
+  out.push(['lunch',meal(D,'lunch')]);
   if(D.tpl==='A')out.push(['snack',FIXED.snack]);
-  const N=mainMeal(D,'dinner');out.push(['dinner',{n:'晚餐',time:'19:00',d:`${SRC[D.meals.dinner.src].n} ${N.g}g 生重 · 米饭 220g 熟`,...N}]);
+  out.push(['dinner',meal(D,'dinner')]);
   return out;
 }
 function totals(D){
@@ -384,39 +389,27 @@ function vSet(){
   <div class="foot">肉按生重，米饭按熟重。不推荐蛋白粉，不做医疗判断。</div>`;
 }
 
-function editBf(){
-  const D=day(VIEW),items=bfItems(D),cur=bfMeal(D);
-  const have=new Set(items.map(x=>x[0]));
+let EK='bfast';
+function chips(ids,have,lbl){const l=ids.filter(id=>!have.has(id));return l.length?`<div class="lbl" style="margin-top:14px">${lbl}</div><div class="chips">${l.map(id=>`<button data-a="iadd" data-v="${id}">+ ${FOOD[id].n}</button>`).join('')}</div>`:''}
+function editItems(k){
+  EK=k;const D=day(VIEW),items=getItems(D,k),cur=meal(D,k),have=new Set(items.map(x=>x[0]));
+  const top=k==='bfast'
+    ?`<div class="lbl" style="margin-top:12px">常吃的</div><div class="chips">${BF_PRESETS.map((p,i)=>`<button data-a="ip" data-i="${i}">${p.n}</button>`).join('')}</div>`
+    :`<div class="chips" style="margin-top:10px"><button data-a="ireset">恢复 ${D.tpl} 模板</button></div>`;
   $('#sheet').innerHTML=`<div class="sheet" data-a="close"><div>
-   <div class="row between"><div class="mid">早餐</div><button class="ghost" data-a="close">完成</button></div>
-   <div class="lbl" style="margin-top:12px">常吃的</div>
-   <div class="chips">${BF_PRESETS.map((p,i)=>`<button data-a="bfp" data-i="${i}">${p.n}</button>`).join('')}</div>
+   <div class="row between"><div class="mid">${NAME[k]}</div><button class="ghost" data-a="close">完成</button></div>
+   ${top}
    <div class="lbl" style="margin-top:14px">这一顿</div>
    ${items.map(([id,a],i)=>{const F=FOOD[id];return `<div class="row num" style="padding:8px 0;border-top:1px solid var(--rule);gap:6px">
-     <div style="flex:1;min-width:0;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${F.n}</div>
-     <div class="step" style="flex:0 0 auto"><button data-a="bfs" data-i="${i}" data-d="${-F.step}" style="padding:8px 10px">−</button>
-     <input class="bfin num" data-i="${i}" type="number" inputmode="decimal" step="any" value="${+(+a).toFixed(1)}" style="width:50px;border:0;border-radius:0;text-align:center;font-weight:600;padding:8px 0">
-     <button data-a="bfs" data-i="${i}" data-d="${F.step}" style="padding:8px 10px">+</button></div>
+     <div style="flex:1;min-width:0;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${F.n}${F.raw?' <span class="sub" style="font-weight:400">生重</span>':F.cooked?' <span class="sub" style="font-weight:400">熟重</span>':''}</div>
+     <div class="step" style="flex:0 0 auto"><button data-a="is" data-i="${i}" data-d="${-F.step}" style="padding:8px 10px">−</button>
+     <input class="iin num" data-i="${i}" type="number" inputmode="decimal" step="any" value="${+(+a).toFixed(1)}" style="width:50px;border:0;border-radius:0;text-align:center;font-weight:600;padding:8px 0">
+     <button data-a="is" data-i="${i}" data-d="${F.step}" style="padding:8px 10px">+</button></div>
      <span class="sub" style="flex:0 0 20px">${F.unit}</span>
-     <button class="ghost" data-a="bfrm" data-i="${i}" aria-label="删除" style="flex:0 0 auto;padding:6px 4px">×</button></div>`}).join('')||'<div class="sub" style="margin-top:6px">还没选，点上面的组合或下面的食材。</div>'}
-   <div class="lbl" style="margin-top:14px">加一样</div>
-   <div class="chips">${Object.entries(FOOD).filter(([id])=>!have.has(id)).map(([id,F])=>`<button data-a="bfadd" data-v="${id}">+ ${F.n}</button>`).join('')}</div>
+     <button class="ghost" data-a="irm" data-i="${i}" aria-label="删除" style="flex:0 0 auto;padding:6px 4px">×</button></div>`}).join('')||'<div class="sub" style="margin-top:6px">还没选，点下面的食材。</div>'}
+   ${k==='bfast'?chips(BF_IDS,have,'加一样'):chips(MEAT_IDS,have,'加肉 / 鱼（可以混合）')+chips(SIDE_IDS,have,'加别的')}
    <div class="sub num" style="margin-top:12px">这一顿 ≈ 蛋白 ${f0(cur.p)}g · ${f0(cur.k)} kcal · 碳水 ${f0(cur.c)}g · 脂肪 ${f0(cur.f)}g</div>
-   <div class="sub" style="margin-top:4px">改过的组合会记住，明天默认还是它。</div>
-  </div></div>`;
-}
-function setBf(D,items){D.bf=items;S.lastBf=clone(items);save()}
-
-function editSheet(k){
-  const D=day(VIEW),m=D.meals[k],cur=mainMeal(D,k);
-  $('#sheet').innerHTML=`<div class="sheet" data-a="close"><div>
-   <div class="row between"><div class="mid">${k==='lunch'?'午餐':'晚餐'}</div><button class="ghost" data-a="close">完成</button></div>
-   <div class="lbl" style="margin-top:12px">蛋白来源</div>
-   <div class="chips">${Object.entries(SRC).map(([id,s])=>`<button data-a="src" data-k="${k}" data-v="${id}" class="${m.src===id?'solid':''}">${s.n}</button>`).join('')}</div>
-   <div class="lbl" style="margin-top:14px">生重 g（${D.tpl} 模板建议 ${SRC[m.src][D.tpl]}g）</div>
-   <div class="ctl num"><div class="step"><button data-a="g" data-k="${k}" data-d="-10">−10</button><span>${cur.g}g</span><button data-a="g" data-k="${k}" data-d="10">+10</button></div>
-   <button class="ghost" data-a="g0" data-k="${k}">恢复建议</button></div>
-   <div class="sub num" style="margin-top:12px">这一餐 ≈ 蛋白 ${f0(cur.p)}g · ${f0(cur.k)} kcal（含 220g 熟米饭、200g 蔬菜、10ml 油）</div>
+   <div class="sub" style="margin-top:4px">${k==='bfast'?'改过的组合会记住，明天默认还是它。':'肉按生重，米饭按熟重。切换 A/B 模板会恢复成模板。'}</div>
   </div></div>`;
 }
 
@@ -428,21 +421,21 @@ document.addEventListener('click',e=>{
   // 点在弹层内容上（不是按钮）时，不要当成点背景关闭
   if(a==='close'&&b.classList.contains('sheet')&&e.target!==b)return;
   switch(a){
-    case'bfp':setBf(D,clone(BF_PRESETS[+b.dataset.i].items));editBf();render();return;
-    case'bfs':{const it=clone(bfItems(D)),i=+b.dataset.i;it[i][1]=Math.max(0,+(it[i][1]+ +b.dataset.d).toFixed(2));setBf(D,it);editBf();render();return}
-    case'bfrm':{const it=clone(bfItems(D));it.splice(+b.dataset.i,1);setBf(D,it);editBf();render();return}
-    case'bfadd':{const it=clone(bfItems(D)),id=b.dataset.v;it.push([id,FOOD[id].def]);setBf(D,it);editBf();render();return}
+    case'ip':setItems(D,EK,clone(BF_PRESETS[+b.dataset.i].items));editItems(EK);render();return;
+    case'ireset':delete D.meals[EK].items;delete D.meals[EK].g;save();editItems(EK);render();return;
+    case'is':{const it=clone(getItems(D,EK)),i=+b.dataset.i;it[i][1]=Math.max(0,+(it[i][1]+ +b.dataset.d).toFixed(2));setItems(D,EK,it);editItems(EK);render();return}
+    case'irm':{const it=clone(getItems(D,EK));it.splice(+b.dataset.i,1);setItems(D,EK,it);editItems(EK);render();return}
+    case'iadd':{const it=clone(getItems(D,EK)),id=b.dataset.v;let amt=FOOD[id].def;
+      if(SRC[id]){amt=SRC[id][D.tpl];if(it.some(x=>SRC[x[0]]))amt=Math.round(amt/20)*10}
+      it.push([id,amt]);setItems(D,EK,it);editItems(EK);render();return}
     case'prev':VIEW=addD(VIEW,-1);break;
     case'next':VIEW=addD(VIEW,1);break;
     case'today':VIEW=TODAY();break;
     case'w':{const v=parseFloat($('#w').value);if(!(v>30&&v<200))return toast('输入晨重 kg');D.w=Math.round(v*10)/10;save();toast('已记录 '+D.w+' kg');break}
-    case'tpl':D.tpl=b.dataset.v;delete D.meals.lunch.g;delete D.meals.dinner.g;save();break;
+    case'tpl':D.tpl=b.dataset.v;for(const k of['lunch','dinner']){delete D.meals[k].g;delete D.meals[k].items}save();break;
     case'train':D.train=!D.train;if(!D.train)delete D.done.pre;save();break;
     case'eat':D.done[b.dataset.k]=!D.done[b.dataset.k];if(!D.done[b.dataset.k])delete D.done[b.dataset.k];save();break;
-    case'edit':b.dataset.k==='bfast'?editBf():editSheet(b.dataset.k);return;
-    case'src':D.meals[b.dataset.k]={src:b.dataset.v};save();editSheet(b.dataset.k);render();return;
-    case'g':{const k=b.dataset.k;const g=mainMeal(D,k).g+ +b.dataset.d;D.meals[k].g=Math.max(0,g);save();editSheet(k);render();return}
-    case'g0':delete D.meals[b.dataset.k].g;save();editSheet(b.dataset.k);render();return;
+    case'edit':editItems(b.dataset.k);return;
     case'close':$('#sheet').innerHTML='';break;
     case'addx':{const e2=[...EXTRAS,...S.custom][+b.dataset.i];D.extras.push({...e2});save();break}
     case'rmx':D.extras.splice(+b.dataset.i,1);save();break;
@@ -461,8 +454,8 @@ document.addEventListener('click',e=>{
   render();
 });
 document.addEventListener('change',e=>{
-  if(e.target.classList.contains('bfin')){const D=day(VIEW),it=clone(bfItems(D)),v=parseFloat(e.target.value);
-    if(!(v>=0))return editBf();it[+e.target.dataset.i][1]=v;setBf(D,it);editBf();render();return}
+  if(e.target.classList.contains('iin')){const D=day(VIEW),it=clone(getItems(D,EK)),v=parseFloat(e.target.value);
+    if(!(v>=0))return editItems(EK);it[+e.target.dataset.i][1]=v;setItems(D,EK,it);editItems(EK);render();return}
   if(e.target.id!=='impf')return;const f=e.target.files[0];if(!f)return;
   f.text().then(t=>{try{const o=JSON.parse(t);if(!o.days)throw 0;if(!confirm('覆盖这台设备上的数据？'))return;S=Object.assign(load(),o);save();render();toast('已导入')}catch(_){toast('文件不对')}});
 });
