@@ -353,8 +353,11 @@ function importStrong(text){
   for(const r of rows){const so=r[iO];if(so==='W'||so==='D')continue;
     const w=parseFloat(r[iW])||0,rp=Math.round(parseFloat(r[iR])||0);if(!rp)continue;
     const ts=r[iD],nm=r[iE];let id=STRONG_MAP[nm];if(!id){id='sx:'+nm;S.exNames[id]=nm;unmapped.add(nm)}
-    const k=ts;(wk[k]=wk[k]||{ts,name:r[iN],sets:{}}).sets[id]={w,r:rp}}  // 每个动作留最后一组正式组
-  const keep=S.sessions.filter(x=>x.src!=='strong');let n=0;
+    const W=(wk[ts]=wk[ts]||{ts,name:r[iN],sets:{}});(W.sets[id]=W.sets[id]||[]).push([w,rp])}
+  // 每个动作：所有正式组的平均重量 × 平均次数（不只看最后一组，最后一组常常已经力竭）
+  const r1=v=>Math.round(v*10)/10;
+  for(const k in wk)for(const id in wk[k].sets){const a=wk[k].sets[id];wk[k].sets[id]={w:r1(a.reduce((x,y)=>x+y[0],0)/a.length),r:r1(a.reduce((x,y)=>x+y[1],0)/a.length),n:a.length,all:a}}
+  const keep=S.sessions.filter(x=>!(x.src==='strong'&&wk[x.ts]));let n=0;
   for(const k in wk){const x=wk[k];let best='S',bn=0;
     for(const d in PLAN){const c=PLAN[d].ex.filter(e=>x.sets[e[0]]||(ALT[e[0]]||[]).some(a=>x.sets[a[0]])).length;if(c>bn){bn=c;best=d}}
     keep.push({date:x.ts.slice(0,10),day:bn>=2?best:'S',name:x.name,sets:x.sets,src:'strong',ts:x.ts});n++}
@@ -447,13 +450,13 @@ function vTrain(){
       const uni=UNI.has(id),last=lastSet(id);
       const lr=last?Math.min(last.r,last.rR!=null?last.rR:last.r):0;
       const nw=w=>last?(lr>=hi?+(w+step).toFixed(2):w):0;
-      const cur=DRAFT[id]||{w:nw(last?last.w:0),r:last?(lr>=hi?lo:last.r):lo,ok:false};
-      if(uni&&cur.wR==null){cur.wR=last?nw(last.wR!=null?last.wR:last.w):cur.w;cur.rR=last?(lr>=hi?lo:(last.rR!=null?last.rR:last.r)):cur.r}
+      const cur=DRAFT[id]||{w:nw(last?last.w:0),r:last?(lr>=hi?lo:Math.round(last.r)):lo,ok:false};
+      if(uni&&cur.wR==null){cur.wR=last?nw(last.wR!=null?last.wR:last.w):cur.w;cur.rR=last?(lr>=hi?lo:Math.round(last.rR!=null?last.rR:last.r)):cur.r}
       DRAFT[id]=cur;
       let hint='第一次：选一个能做 '+lo+'–'+hi+' 次、留 1–2 次余力的重量';
       let up=false;
-      const lastTxt=last?(uni&&last.wR!=null?`左 ${last.w}kg × ${last.r} / 右 ${last.wR}kg × ${last.rR}`:`${last.w}kg × ${last.r}`):'';
-      if(last){if(lr>=hi){hint=`上次 ${lastTxt} 到上限 → 今天 +${step}kg`;up=true}else hint=`上次 ${lastTxt} → 今天争取 ${Math.min(hi,lr+1)} 次`}
+      const lastTxt=last?(uni&&last.wR!=null?`左 ${last.w}kg × ${last.r} / 右 ${last.wR}kg × ${last.rR}`:`${last.n>1?'平均 ':''}${last.w}kg × ${last.r}${last.n>1?`（${last.n} 组）`:''}`):'';
+      if(last){if(lr>=hi){hint=`上次 ${lastTxt} 到上限 → 今天 +${step}kg`;up=true}else hint=`上次 ${lastTxt} → 今天争取 ${Math.min(hi,Math.floor(lr)+1)} 次`}
       const nameH=opts.length>1?`<select class="exsel" data-slot="${base[0]}" style="font-weight:600;padding:6px 8px">${opts.map(o=>`<option value="${o[0]}" ${o[0]===id?'selected':''}>${o[1]}</option>`).join('')}</select>`:n;
       const ctl=(fw,fr,lab)=>`<div class="ctl num">${lab?`<span class="sub" style="width:16px">${lab}</span>`:''}<div class="step"><button data-a="st" data-id="${id}" data-f="${fw}" data-d="${-step}">−</button><input class="trin num" data-id="${id}" data-f="${fw}" type="number" inputmode="decimal" step="any" value="${cur[fw]}"><button data-a="st" data-id="${id}" data-f="${fw}" data-d="${step}">+</button></div>
         <span class="sub">kg</span><span class="x">×</span>
@@ -464,7 +467,7 @@ function vTrain(){
         ${uni?ctl('w','r','左')+ctl('wR','rR','右'):ctl('w','r','')}</div>`;
     }
     const n=Object.values(DRAFT).filter(x=>x.ok).length;
-    h+=`</div><div class="sub" style="margin:-4px 2px 10px">记最后一组的重量和次数，数字可以直接点进去输入。最后一组到区间上限，下次就加重。</div>
+    h+=`</div><div class="sub" style="margin:-4px 2px 10px">记正式组的平均重量和平均次数（热身组不算），数字可以直接点进去输入。平均次数到区间上限，下次就加重。</div>
     <button class="solid" data-a="savesess" style="width:100%;padding:13px;${n?'':'opacity:.4'}" ${n?'':'disabled'}>保存 ${n}/${P.ex.length} 个动作</button>`;
   }
   const recent=S.sessions.slice(-5).reverse();
@@ -546,7 +549,7 @@ function vSet(){
     <button data-a="addc" style="margin-top:8px;width:100%">添加</button>
     ${S.custom.length?`<div class="list" style="margin-top:8px">${S.custom.map((c,i)=>`<div class="r"><span>${c.n}</span><span class="sub">${c.p}g · ${c.k}kcal <span data-a="rmc" data-i="${i}" style="cursor:pointer">删除</span></span></div>`).join('')}</div>`:''}</div>
   <div class="card"><div class="lbl">从 Strong 导入训练</div>
-    <div class="sub" style="margin-top:4px">Strong → Profile → 齿轮 → Export Data → CSV，存到「文件」后在这里选。热身组和递减组会跳过，每个动作记最后一组正式组。重复导入会覆盖旧的 Strong 记录，不会重复。</div>
+    <div class="sub" style="margin-top:4px">Strong → Profile → 齿轮 → Export Data → CSV，存到「文件」后在这里选。热身组和递减组会跳过，每个动作取所有正式组的平均重量和平均次数。同一次训练重复导入会覆盖，不会重复。</div>
     <button data-a="simp" style="margin-top:10px;width:100%">选择 Strong CSV</button>
     <input type="file" id="strongf" accept=".csv,text/csv,text/comma-separated-values" class="hidden"></div>
   <div class="card"><div class="lbl">数据只存在这台手机的浏览器里</div>
@@ -711,6 +714,8 @@ document.addEventListener('change',e=>{
 });
 document.addEventListener('input',e=>{if(e.target.id==='w')e.target.classList.toggle('saved',e.target.value!==''&&parseFloat(e.target.value)===parseFloat(e.target.dataset.saved))});
 document.addEventListener('keydown',e=>{if(e.key==='Enter'&&e.target.id==='w'){document.querySelector('[data-a=w]').click()}});
+const SEED_1107=`Date,Workout Name,Duration,Exercise Name,Set Order,Weight,Reps,Distance,Seconds,RPE\n2026-11-07 12:39:17,"Whole Body_1B",49m,"Incline Bench Press (Smith Machine)",W,10.3,10.0,0,0.0,\n2026-11-07 12:39:17,"Whole Body_1B",49m,"Incline Bench Press (Smith Machine)",W,31.3,5.0,0,0.0,\n2026-11-07 12:39:17,"Whole Body_1B",49m,"Incline Bench Press (Smith Machine)",W,41.3,3.0,0,0.0,\n2026-11-07 12:39:17,"Whole Body_1B",49m,"Incline Bench Press (Smith Machine)",1,41.3,7.0,0,0.0,\n2026-11-07 12:39:17,"Whole Body_1B",49m,"Incline Bench Press (Smith Machine)",2,41.3,6.0,0,0.0,\n2026-11-07 12:39:17,"Whole Body_1B",49m,"Incline Bench Press (Smith Machine)",3,41.3,4.0,0,0.0,\n2026-11-07 12:39:17,"Whole Body_1B",49m,"Seated Wide-Grip Row (Cable)",1,24.9,12.0,0,0.0,\n2026-11-07 12:39:17,"Whole Body_1B",49m,"Seated Wide-Grip Row (Cable)",2,27.2,12.0,0,0.0,\n2026-11-07 12:39:17,"Whole Body_1B",49m,"Seated Wide-Grip Row (Cable)",3,29.5,7.0,0,0.0,\n2026-11-07 12:39:17,"Whole Body_1B",49m,"Romanian Deadlift (Dumbbell)",1,36.0,10.0,0,0.0,\n2026-11-07 12:39:17,"Whole Body_1B",49m,"Romanian Deadlift (Dumbbell)",2,45.0,11.0,0,0.0,\n2026-11-07 12:39:17,"Whole Body_1B",49m,"Romanian Deadlift (Dumbbell)",3,45.0,13.0,0,0.0,\n2026-11-07 12:39:17,"Whole Body_1B",49m,"Bicep Curl (Dumbbell)",1,6.8,10.0,0,0.0,\n2026-11-07 12:39:17,"Whole Body_1B",49m,"Bicep Curl (Dumbbell)",2,6.8,7.0,0,0.0,\n2026-11-07 12:39:17,"Whole Body_1B",49m,"Bicep Curl (Dumbbell)",3,6.8,8.0,0,0.0,\n2026-11-07 12:39:17,"Whole Body_1B",49m,"Bicep Curl (Dumbbell)",4,6.8,5.0,0,0.0,\n2026-11-07 12:39:17,"Whole Body_1B",49m,"Bicep Curl (Dumbbell)",D,6.8,7.0,0,0.0,\n2026-11-07 12:39:17,"Whole Body_1B",49m,"Bicep Curl (Dumbbell)",D,4.5,6.0,0,0.0,\n2026-11-07 12:39:17,"Whole Body_1B",49m,"Leg Press",W,91.0,8.0,0,0.0,\n2026-11-07 12:39:17,"Whole Body_1B",49m,"Leg Press",W,114.0,5.0,0,0.0,\n2026-11-07 12:39:17,"Whole Body_1B",49m,"Leg Press",1,125.0,8.0,0,0.0,\n2026-11-07 12:39:17,"Whole Body_1B",49m,"Leg Press",2,120.0,7.0,0,0.0,\n2026-11-07 12:39:17,"Whole Body_1B",49m,"Leg Press",3,114.0,10.0,0,0.0,`;
+if(!S.sessions.some(x=>x.ts==='2026-11-07 12:39:17')){try{importStrong(SEED_1107)}catch(e){}}
 render();
 if('serviceWorker' in navigator&&location.protocol==='https:')navigator.serviceWorker.register('sw.js').catch(()=>{});
 </script>
