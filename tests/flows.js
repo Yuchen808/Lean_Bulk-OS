@@ -68,6 +68,21 @@
     const subs=[...document.querySelectorAll('.stats .sub')].map(x=>x.textContent);
     ok('碳水和脂肪有目标值', subs.some(x=>/\/ 33\d g/.test(x))&&subs.some(x=>/\/ 7\d g/.test(x)), subs);
 
+    // 8c. 喝水 / 肌酸 / 维生素 D / 加餐 / 红薯
+    go('today', '2026-11-08');
+    $$('[data-a=water][data-v="500"]').click(); $$('[data-a=water][data-v="750"]').click();
+    ok('喝水累计 1.25L', day('2026-11-08').water === 1250, day('2026-11-08').water);
+    $$('[data-a=tick][data-v=creatine]').click();
+    ok('肌酸打卡', day('2026-11-08').creatine === true, null);
+    const vd0 = totals(day('2026-11-08')).t.vd; $$('[data-a=tick][data-v=vitd]').click();
+    ok('维生素 D 补剂算进微量营养', Math.abs(totals(day('2026-11-08')).t.vd - vd0 - 10) < 1e-6, [vd0, totals(day('2026-11-08')).t.vd]);
+    const ob = oilyWeek('2026-11-08'); const ix = [...EXTRAS, ...S.custom].findIndex(e => e.n === '三文鱼 bagel');
+    $$('[data-a=addx][data-i="' + ix + '"]').click();
+    ok('三文鱼 bagel 算一份油性鱼', oilyWeek('2026-11-08') === ob + 1, [ob, oilyWeek('2026-11-08')]);
+    $$('[data-a=edit][data-k=lunch]').click(); $$('[data-a=iadd][data-v=swp]').click();
+    ok('午餐能加红薯', getItems(day('2026-11-08'), 'lunch').some(x => x[0] === 'swp'), getItems(day('2026-11-08'), 'lunch'));
+    $$('#sheet').innerHTML = '';
+
     // 9. 早餐组合
     $$('[data-a=edit][data-k=bfast]').click();
     $$('[data-a=ip][data-i="1"]').click();

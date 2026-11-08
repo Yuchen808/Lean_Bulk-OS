@@ -46,6 +46,7 @@ input:focus,select:focus{outline:2px solid var(--ink);outline-offset:-1px}
 .nut .bar{flex:1;margin-top:0}
 .nut .v{flex:0 0 116px;text-align:right;white-space:nowrap;font-size:12.5px}
 .nut .ok i{background:var(--ok)}
+.okbar i{background:var(--ok)}
 button{font:inherit;color:var(--ink);background:transparent;border:1px solid var(--rule2);border-radius:8px;padding:9px 12px;cursor:pointer}
 button.solid{background:var(--fill);color:var(--onfill);border-color:var(--fill);font-weight:600}
 button.ghost{border-color:transparent;color:var(--muted);padding:6px 8px}
@@ -143,7 +144,11 @@ const EXTRAS=[
   {n:'30g 杏仁',p:6.3,c:6.5,f:15,k:175,fib:3.7,fol:15,ca:80,fe:1.1,pot:220,mg:80,zn:.9},
   {n:'贝果',p:10,c:50,f:1.5,k:260,fib:2.5,fol:50,ca:20,fe:3,pot:100,mg:25,zn:.8},
   {n:'150g 米饭',p:4,c:42,f:.4,k:195,fib:.6,fol:4,ca:15,fe:.3,pot:50,mg:18,zn:.75},
-  {n:'全麦吐司',p:4,c:18,f:1,k:95,fib:2.8,fol:17,ca:40,fe:1,pot:100,mg:30,zn:.7}
+  {n:'全麦吐司',p:4,c:18,f:1,k:95,fib:2.8,fol:17,ca:40,fe:1,pot:100,mg:30,zn:.7},
+  {n:'Skyr 碗',p:28,c:55,f:6,k:400,fib:6,vc:15,fol:30,b12:1,ca:300,fe:1.5,pot:450,mg:60,zn:2,snack:1},
+  {n:'三文鱼 bagel',p:24,c:50,f:13,k:420,fib:2.5,va:60,fol:50,b12:1.8,vd:4,ca:60,fe:3,pot:250,mg:35,zn:1.2,snack:1,oily:1},
+  {n:'鹰嘴豆泥+皮塔',p:13,c:55,f:15,k:400,fib:10,vc:5,fol:90,ca:80,fe:3,pot:350,mg:70,zn:1.8,snack:1},
+  {n:'Malt loaf+香蕉',p:6,c:65,f:2,k:300,fib:5,vc:10,fol:25,ca:60,fe:1.5,pot:500,mg:45,zn:.6,snack:1}
 ];
 // 早餐食材：每 100g / 100ml；按个 / 根计的用 per = 每个的克数
 const FOOD={
@@ -172,7 +177,10 @@ Object.assign(FOOD,{
   v_bean:{n:'四季豆',unit:'g',step:50,def:150,p:1.8,c:4.3,f:.2,k:31,fib:2.7,veg:1},
   v_mush:{n:'蘑菇',unit:'g',step:50,def:150,p:3.1,c:2.3,f:.3,k:22,fib:1,veg:1},
   v_cour:{n:'西葫芦',unit:'g',step:50,def:150,p:1.2,c:2.1,f:.3,k:17,fib:1,veg:1},
-  v_bok:{n:'小白菜',unit:'g',step:50,def:200,p:1.5,c:1.2,f:.2,k:13,fib:1,veg:1}
+  v_bok:{n:'小白菜',unit:'g',step:50,def:200,p:1.5,c:1.2,f:.2,k:13,fib:1,veg:1},
+  v_frz:{n:'冷冻混合蔬菜',unit:'g',step:50,def:200,p:3,c:10,f:.5,k:60,fib:4,veg:1},
+  tato:{n:'土豆',unit:'g',step:50,def:250,p:2,c:17,f:.1,k:77,fib:1.8,cooked:1},
+  swp:{n:'红薯',unit:'g',step:50,def:250,p:1.6,c:20,f:.1,k:86,fib:3,cooked:1}
 });
 const VEG_IDS=Object.keys(FOOD).filter(id=>FOOD[id].veg);
 // 微量营养，每 100g / 100ml（USDA / 英国食物成分表的近似值，只作趋势参考）
@@ -205,7 +213,10 @@ const MICRO={
   v_bean:{vc:12,va:35,fol:33,ca:37,fe:1,pot:211,mg:25,zn:.24},
   v_mush:{vc:2,fol:17,b12:.04,vd:.2,ca:3,fe:.5,pot:318,mg:9,zn:.5},
   v_cour:{vc:18,va:10,fol:24,ca:16,fe:.4,pot:261,mg:18,zn:.3},
-  v_bok:{vc:45,va:223,fol:66,ca:105,fe:.8,pot:252,mg:19,zn:.2}
+  v_bok:{vc:45,va:223,fol:66,ca:105,fe:.8,pot:252,mg:19,zn:.2},
+  v_frz:{vc:10,va:300,fol:40,ca:25,fe:.8,pot:200,mg:20,zn:.5},
+  tato:{vc:10,fol:10,ca:5,fe:.3,pot:420,mg:23,zn:.3},
+  swp:{vc:20,va:960,fol:6,ca:30,fe:.6,pot:475,mg:27,zn:.3}
 };
 for(const id in MICRO)Object.assign(FOOD[id],MICRO[id]);
 // NHS / 英国 RNI，成年男性每天
@@ -216,7 +227,7 @@ const NUT=[
 ];
 const ZERO=()=>{const t={p:0,c:0,f:0,k:0};for(const[x]of NUT)t[x]=0;return t};
 const BF_IDS=['egg','ew','oat','milk','sd','ban','pb','oil','skyr'];
-const MEAT_IDS=Object.keys(SRC),SIDE_IDS=['rice','veg','oil','egg'];
+const MEAT_IDS=Object.keys(SRC),SIDE_IDS=['rice','tato','swp','veg','oil','egg'];
 const BF_PRESETS=[
   {n:'燕麦蛋白',items:[['egg',1],['ew',250],['oat',60],['milk',200]]},
   {n:'3 全蛋',items:[['egg',3],['oil',5]]},
@@ -303,6 +314,7 @@ function totals(D){
   const t=ZERO(),plan={p:0,k:0};
   for(const[k,m]of slots(D)){plan.p+=m.p;plan.k+=m.k;if(D.done[k])for(const x in t)t[x]+=m[x]||0}
   for(const e of D.extras)for(const x in t)t[x]+=e[x]||0;
+  if(D.vitd)t.vd+=10;
   return {t,plan};
 }
 function weights(){return Object.entries(S.days).filter(([,d])=>d.w).map(([s,d])=>[s,d.w]).sort((a,b)=>a[0]<b[0]?-1:1)}
@@ -401,6 +413,12 @@ function vToday(){
     <div class="stats num"><div><div class="lbl">7 天均重</div><div class="mid">${f1(a7)}</div></div>
     <div><div class="lbl">比上周</div><div class="mid">${a7!=null&&a7p!=null?((a7-a7p>=0?'+':'')+(a7-a7p).toFixed(2)):'—'}</div></div>
     <div><div class="lbl">目标</div><div class="mid">+0.15</div></div></div></div>`;
+  {const ml=D.water||0,goal=3500,pc=Math.min(100,ml/goal*100);
+  h+=`<div class="card"><div class="row between"><div class="lbl">每天打卡</div><div class="sub num">${ml>=goal?'✓ ':''}水 ${(ml/1000).toFixed(2)} / 3.5 L</div></div>
+    <div class="bar ${ml>=goal?'okbar':''}"><i style="width:${pc}%"></i></div>
+    <div class="chips"><button data-a="water" data-v="250">+ 250ml</button><button data-a="water" data-v="500">+ 500ml</button><button data-a="water" data-v="750">+ 750ml</button><button class="ghost" data-a="water" data-v="-250">− 250</button></div>
+    <div class="row" style="margin-top:10px;gap:18px"><label class="row" style="gap:8px"><button class="chk ${D.creatine?'on':''}" data-a="tick" data-v="creatine"></button>肌酸 5g</label>
+    <label class="row" style="gap:8px"><button class="chk ${D.vitd?'on':''}" data-a="tick" data-v="vitd"></button>维生素 D 10µg</label></div></div>`;}
   h+=`<div class="card"><div class="row between"><div class="lbl">吃了</div>
     <div class="row"><button class="ghost" data-a="train" style="font-size:13px">${D.train?'训练日':'休息日'} ⇄</button>
     <div class="seg"><button data-a="tpl" data-v="A" class="${D.tpl==='A'?'on':''}">A 下午加餐</button><button data-a="tpl" data-v="B" class="${D.tpl==='B'?'on':''}">B</button></div></div></div>`;
@@ -411,7 +429,9 @@ function vToday(){
       <div class="p num">${f0(m.p)}g</div></div>`;
   }
   if(D.extras.length)h+=`<div class="meal"><div style="width:28px"></div><div class="t"><div class="n">额外</div><div class="d">${D.extras.map((e,i)=>`<span data-a="rmx" data-i="${i}" style="cursor:pointer">${e.n} ×</span>`).join(' · ')}</div></div><div class="p num">${f0(D.extras.reduce((a,e)=>a+e.p,0))}g</div></div>`;
-  h+=`<div class="chips">${[...EXTRAS,...S.custom].map((e,i)=>`<button data-a="addx" data-i="${i}">+ ${e.n}</button>`).join('')}</div></div>`;
+  const ALLX=[...EXTRAS,...S.custom];
+  h+=`<div class="lbl" style="margin-top:12px">加餐</div><div class="chips">${ALLX.map((e,i)=>e.snack?`<button data-a="addx" data-i="${i}">+ ${e.n}</button>`:'').join('')}</div>
+  <div class="lbl" style="margin-top:10px">零碎</div><div class="chips">${ALLX.map((e,i)=>e.snack?'':`<button data-a="addx" data-i="${i}">+ ${e.n}</button>`).join('')}</div></div>`;
   h+=`<div class="card num"><div class="row between"><div class="lbl">蛋白</div><div class="sub">计划 ${f0(plan.p)}g</div></div>
     <div class="row" style="align-items:baseline;gap:6px;margin-top:2px"><span class="big">${f0(t.p)}</span><span class="sub">/ ${prot} g</span></div>
     <div class="bar"><i style="width:${pp}%"></i><b style="left:${pm}%"></b></div>
@@ -424,7 +444,8 @@ function vToday(){
 }
 
 function oilyWeek(s){const m=monday(s);let n=0;for(let j=0;j<7;j++){const D=S.days[addD(m,j)];if(!D)continue;
-  for(const k of['lunch','dinner'])if(D.done[k]&&getItems(D,k).some(([id,a])=>id==='sal'&&a>=100))n++}return n}
+  for(const k of['lunch','dinner'])if(D.done[k]&&getItems(D,k).some(([id,a])=>id==='sal'&&a>=100))n++;
+  n+=D.extras.filter(e=>e.oily).length}return n}
 function vNut(s,t){
   const fmt=v=>v>=10?f0(v):v.toFixed(1);
   const rows=NUT.map(([x,n,u,goal])=>{const v=t[x]||0,pc=Math.min(100,v/goal*100),ok=v>=goal;
@@ -695,6 +716,8 @@ document.addEventListener('click',e=>{
     case'eat':D.done[b.dataset.k]=!D.done[b.dataset.k];if(!D.done[b.dataset.k])delete D.done[b.dataset.k];save();break;
     case'edit':FORM=null;editItems(b.dataset.k);return;
     case'close':$('#sheet').innerHTML='';break;
+    case'water':D.water=Math.max(0,(D.water||0)+ +b.dataset.v);save();break;
+    case'tick':D[b.dataset.v]=!D[b.dataset.v];save();break;
     case'addx':{const e2=[...EXTRAS,...S.custom][+b.dataset.i];D.extras.push({...e2});save();break}
     case'rmx':D.extras.splice(+b.dataset.i,1);save();break;
     case'td':TD=b.dataset.v;DRAFT=null;break;
