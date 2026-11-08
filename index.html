@@ -236,6 +236,14 @@ const PLAN={
     ['d4a','哑铃坐姿推肩',8,10,2],['d4b','单臂划船（哑铃 / 绳索）',8,10,2],['d4c','卧姿腿弯举 / 早安式',10,12,2],
     ['d4d','哑铃锤式弯举',10,12,1],['d4e','绳索三头下压',10,12,2.5]]}
 };
+// 可替换动作：同一个位置换成别的动作，各自记各自的进度
+const ALT={
+  d2b:[['d2b_scr','坐姿绳索划船',8,10,2.5]],
+  d2d:[['d2d_uc','单臂绳索弯举',10,12,1.25]]
+};
+// 单侧动作：左右各记一组
+const UNI=new Set(['d2b','d2d_uc','d4b']);
+const ALL_EX=[];for(const k in PLAN)for(const e of PLAN[k].ex){ALL_EX.push(e);for(const a of ALT[e[0]]||[])ALL_EX.push(a)}
 const OLD=[['杠铃深蹲',71.3,6],['卧推',61.3,9],['硬拉',81.3,8]];
 
 function load(){
@@ -397,19 +405,28 @@ function vTrain(){
     h+=`<div class="row between" style="margin-bottom:12px"><div class="mid">${TD} · ${P.n}</div>
     <div class="seg">${Object.keys(PLAN).map(k=>`<button data-a="td" data-v="${k}" class="${k===TD?'on':''}">${k}</button>`).join('')}</div></div>
     <div class="card">`;
-    for(const[id,n,lo,hi,step]of P.ex){
-      const last=lastSet(id);
-      const cur=DRAFT[id]||{w:last?(last.r>=hi?+(last.w+step).toFixed(2):last.w):0,r:last?(last.r>=hi?lo:last.r):lo,ok:false};
+    const alt=S.settings.alt||(S.settings.alt={});
+    for(const base of P.ex){
+      const opts=[base,...(ALT[base[0]]||[])];
+      const [id,n,lo,hi,step]=opts.find(o=>o[0]===alt[base[0]])||base;
+      const uni=UNI.has(id),last=lastSet(id);
+      const lr=last?Math.min(last.r,last.rR!=null?last.rR:last.r):0;
+      const nw=w=>last?(lr>=hi?+(w+step).toFixed(2):w):0;
+      const cur=DRAFT[id]||{w:nw(last?last.w:0),r:last?(lr>=hi?lo:last.r):lo,ok:false};
+      if(uni&&cur.wR==null){cur.wR=last?nw(last.wR!=null?last.wR:last.w):cur.w;cur.rR=last?(lr>=hi?lo:(last.rR!=null?last.rR:last.r)):cur.r}
       DRAFT[id]=cur;
       let hint='第一次：选一个能做 '+lo+'–'+hi+' 次、留 1–2 次余力的重量';
       let up=false;
-      if(last){if(last.r>=hi){hint=`上次 ${last.w}kg × ${last.r} 到上限 → 今天 +${step}kg`;up=true}else hint=`上次 ${last.w}kg × ${last.r} → 今天争取 ${Math.min(hi,last.r+1)} 次`}
-      h+=`<div class="ex"><div class="top"><div class="name">${n}</div><div class="rng">${lo}–${hi} 次</div></div>
-        <div class="hint ${up?'up':''}">${hint}</div>
-        <div class="ctl num"><div class="step"><button data-a="st" data-id="${id}" data-f="w" data-d="${-step}">−</button><input class="trin num" data-id="${id}" data-f="w" type="number" inputmode="decimal" step="any" value="${cur.w}"><button data-a="st" data-id="${id}" data-f="w" data-d="${step}">+</button></div>
+      const lastTxt=last?(uni&&last.wR!=null?`左 ${last.w}kg × ${last.r} / 右 ${last.wR}kg × ${last.rR}`:`${last.w}kg × ${last.r}`):'';
+      if(last){if(lr>=hi){hint=`上次 ${lastTxt} 到上限 → 今天 +${step}kg`;up=true}else hint=`上次 ${lastTxt} → 今天争取 ${Math.min(hi,lr+1)} 次`}
+      const nameH=opts.length>1?`<select class="exsel" data-slot="${base[0]}" style="font-weight:600;padding:6px 8px">${opts.map(o=>`<option value="${o[0]}" ${o[0]===id?'selected':''}>${o[1]}</option>`).join('')}</select>`:n;
+      const ctl=(fw,fr,lab)=>`<div class="ctl num">${lab?`<span class="sub" style="width:16px">${lab}</span>`:''}<div class="step"><button data-a="st" data-id="${id}" data-f="${fw}" data-d="${-step}">−</button><input class="trin num" data-id="${id}" data-f="${fw}" type="number" inputmode="decimal" step="any" value="${cur[fw]}"><button data-a="st" data-id="${id}" data-f="${fw}" data-d="${step}">+</button></div>
         <span class="sub">kg</span><span class="x">×</span>
-        <div class="step"><button data-a="st" data-id="${id}" data-f="r" data-d="-1">−</button><input class="trin num" data-id="${id}" data-f="r" type="number" inputmode="numeric" step="1" value="${cur.r}" style="width:44px"><button data-a="st" data-id="${id}" data-f="r" data-d="1">+</button></div>
-        <button class="chk ${cur.ok?'on':''}" data-a="exok" data-id="${id}" style="margin-left:auto"></button></div></div>`;
+        <div class="step"><button data-a="st" data-id="${id}" data-f="${fr}" data-d="-1">−</button><input class="trin num" data-id="${id}" data-f="${fr}" type="number" inputmode="numeric" step="1" value="${cur[fr]}" style="width:44px"><button data-a="st" data-id="${id}" data-f="${fr}" data-d="1">+</button></div>
+        ${fw==='w'?`<button class="chk ${cur.ok?'on':''}" data-a="exok" data-id="${id}" style="margin-left:auto"></button>`:''}</div>`;
+      h+=`<div class="ex"><div class="top"><div class="name">${nameH}</div><div class="rng">${lo}–${hi} 次${uni?' · 左右各一组':''}</div></div>
+        <div class="hint ${up?'up':''}">${hint}</div>
+        ${uni?ctl('w','r','左')+ctl('wR','rR','右'):ctl('w','r','')}</div>`;
     }
     const n=Object.values(DRAFT).filter(x=>x.ok).length;
     h+=`</div><div class="sub" style="margin:-4px 2px 10px">记最后一组的重量和次数，数字可以直接点进去输入。最后一组到区间上限，下次就加重。</div>
@@ -466,7 +483,7 @@ function vTrend(){
   h+=`<div class="card list"><div class="lbl" style="margin-bottom:4px">每周</div>${rows}</div>`;
   // 力量
   let ex='';
-  for(const k in PLAN)for(const[id,n]of PLAN[k].ex){
+  for(const[id,n]of ALL_EX){
     const p=S.sessions.filter(s=>s.sets[id]).map(s=>[s.date,e1rm(s.sets[id].w,s.sets[id].r)]);
     if(!p.length)continue;
     const first=p[0][1],now=p[p.length-1][1];
@@ -628,7 +645,7 @@ document.addEventListener('click',e=>{
     case'pick':VIEW=b.dataset.v;CM=null;DRAFT=null;$('#sheet').innerHTML='';break;
     case'st':{const x=DRAFT[b.dataset.id],f=b.dataset.f;x[f]=Math.max(0,+(x[f]+ +b.dataset.d).toFixed(2));x.ok=true;break}
     case'exok':DRAFT[b.dataset.id].ok=!DRAFT[b.dataset.id].ok;break;
-    case'savesess':{const sets={};for(const id in DRAFT)if(DRAFT[id].ok)sets[id]={w:DRAFT[id].w,r:DRAFT[id].r};
+    case'savesess':{const sets={};for(const id in DRAFT)if(DRAFT[id].ok){const x=DRAFT[id];sets[id]={w:x.w,r:x.r};if(UNI.has(id)&&x.wR!=null){sets[id].wR=x.wR;sets[id].rR=x.rR}}
       if(!Object.keys(sets).length)return;const dt=VIEW;S.sessions.push({date:dt,day:TD,sets});S.sessions.sort((a,b)=>a.date<b.date?-1:a.date>b.date?1:0);day(dt).train=true;save();toast(TD+' 已保存');TD=null;DRAFT=null;break}
     case'tday':{const v=+b.dataset.v,t=S.settings.trainDays;const i=t.indexOf(v);i>=0?t.splice(i,1):t.push(v);break}
     case'saveset':S.settings.prot=+$('#sp').value||140;S.settings.kcal=+$('#sk').value||2550;save();toast('已保存');break;
@@ -640,7 +657,8 @@ document.addEventListener('click',e=>{
   render();
 });
 document.addEventListener('change',e=>{
-  if(e.target.classList.contains('trin')){const x=DRAFT&&DRAFT[e.target.dataset.id],v=parseFloat(e.target.value);if(x&&v>=0){x[e.target.dataset.f]=e.target.dataset.f==='r'?Math.round(v):v;x.ok=true}render();return}
+  if(e.target.classList.contains('exsel')){const alt=S.settings.alt||(S.settings.alt={});const slot=e.target.dataset.slot;const old=alt[slot]||slot;if(DRAFT)delete DRAFT[old];alt[slot]=e.target.value;save();render();return}
+  if(e.target.classList.contains('trin')){const x=DRAFT&&DRAFT[e.target.dataset.id],v=parseFloat(e.target.value);if(x&&v>=0){x[e.target.dataset.f]=/^r/.test(e.target.dataset.f)?Math.round(v):v;x.ok=true}render();return}
   if(e.target.classList.contains('vsel')){const D=day(VIEW),it=clone(getItems(D,EK));it[+e.target.dataset.i][0]=e.target.value;setItems(D,EK,it);editItems(EK);render();return}
   if(e.target.classList.contains('iin')){const D=day(VIEW),it=clone(getItems(D,EK)),v=parseFloat(e.target.value);
     if(!(v>=0))return editItems(EK);it[+e.target.dataset.i][1]=v;setItems(D,EK,it);editItems(EK);render();return}
