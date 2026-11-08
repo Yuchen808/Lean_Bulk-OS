@@ -703,7 +703,7 @@ document.addEventListener('click',e=>{
     case'exok':DRAFT[b.dataset.id].ok=!DRAFT[b.dataset.id].ok;DIRTY=true;break;
     case'savesess':{const sets={};for(const id in DRAFT)if(DRAFT[id].ok){const x=DRAFT[id];sets[id]={w:x.w,r:x.r};if(UNI.has(id)&&x.wR!=null){sets[id].wR=x.wR;sets[id].rR=x.rR}}
       if(!Object.keys(sets).length)return;const dt=VIEW;const ex=S.sessions.find(x=>x.date===dt&&x.day===TD);
-      if(ex){for(const id in sets){const old=ex.sets[id];ex.sets[id]=old&&old.w===sets[id].w&&old.r===sets[id].r?old:sets[id]}
+      if(ex){for(const id in sets){const old=ex.sets[id],nw=sets[id];const same=old&&['w','r','wR','rR'].every(f=>(old[f]??null)===(nw[f]??null));ex.sets[id]=same?old:(old&&old.all&&old.w===nw.w&&old.r===nw.r?{...nw,all:old.all,n:old.n}:nw)}
         for(const id in DRAFT)if(!DRAFT[id].ok)delete ex.sets[id];ex.edited=true}else S.sessions.push({date:dt,day:TD,sets});S.sessions.sort((a,b)=>a.date<b.date?-1:a.date>b.date?1:0);day(dt).train=true;save();toast(TD+' 已保存');TD=null;DRAFT=null;break}
     case'tday':{const v=+b.dataset.v,t=S.settings.trainDays;const i=t.indexOf(v);i>=0?t.splice(i,1):t.push(v);break}
     case'saveset':S.settings.prot=+$('#sp').value||140;S.settings.kcal=+$('#sk').value||2550;save();toast('已保存');break;
