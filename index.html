@@ -89,6 +89,7 @@ button.ghost{border-color:transparent;color:var(--muted);padding:6px 8px}
 .cal button[disabled]{opacity:.3}
 .cal .dot{position:absolute;top:4px;right:5px;width:7px;height:7px;border-radius:50%;background:var(--ok)}
 .rest{text-align:center;padding:28px 10px}
+.savedbox{width:100%;padding:13px;border:1.5px solid var(--ok);background:var(--okbg);color:var(--ok);border-radius:8px;text-align:center;font-weight:650}
 .ctl{display:flex;align-items:center;gap:8px;margin-top:8px}
 .x{color:var(--muted)}
 nav{position:fixed;left:0;right:0;bottom:0;background:color-mix(in srgb,var(--paper) 88%,transparent);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);border-top:1px solid var(--rule);display:flex;justify-content:center;padding:6px 8px calc(env(safe-area-inset-bottom) + 6px)}
@@ -324,8 +325,8 @@ function verdict(ref){
   return{t:'保持',d:'在目标速度内（+0.1–0.2 kg/周），照常吃。',delta:d0};
 }
 const e1rm=(w,r)=>w*(1+r/30);
-function lastSet(id){for(let i=S.sessions.length-1;i>=0;i--){const x=S.sessions[i].sets[id];if(x)return x}return null}
-function nextDay(){for(let i=S.sessions.length-1;i>=0;i--){const d=S.sessions[i].day;if(PLAN[d])return'D'+(+d[1]%4+1)}return'D1'}
+function lastSet(id,before){for(let i=S.sessions.length-1;i>=0;i--){const ss=S.sessions[i];if(before&&ss.date>=before)continue;const x=ss.sets[id];if(x)return x}return null}
+function nextDay(before){for(let i=S.sessions.length-1;i>=0;i--){const ss=S.sessions[i];if(before&&ss.date>=before)continue;if(PLAN[ss.day])return'D'+(+ss.day[1]%4+1)}return'D1'}
 // Strong 动作名 → 这里的动作；没对上的按 Strong 原名单独记
 const STRONG_MAP={
   'Bench Press (Dumbbell)':'d1a','Lat Pulldown (Machine)':'d1b','Lat Pulldown (Cable)':'d1b',
@@ -369,7 +370,7 @@ function importStrong(text){
 const $=s=>document.querySelector(s);
 const f1=n=>n==null?'—':n.toFixed(1);
 const f0=n=>Math.round(n);
-let TAB='today',VIEW=TODAY(),TD=null,DRAFT=null;
+let TAB='today',VIEW=TODAY(),TD=null,DRAFT=null,DIRTY=false;
 function toast(m){const e=document.createElement('div');e.textContent=m;e.style.cssText='position:fixed;left:50%;bottom:96px;transform:translateX(-50%);background:var(--fill);color:var(--onfill);padding:8px 14px;border-radius:8px;font-size:13px;z-index:20';document.body.appendChild(e);setTimeout(()=>e.remove(),1800)}
 
 function render(){
@@ -431,13 +432,14 @@ function vNut(s,t){
 
 function vTrain(){
   const D=day(VIEW),d=parse(VIEW);
+  const done=S.sessions.filter(x=>x.date===VIEW),isTr=D.train||done.length>0;
   let h=`<h1>训练</h1><div class="row between"><div class="date tap" data-a="cal">${d.getMonth()+1}月${d.getDate()}日 周${WD[d.getDay()]}</div>
-    <div class="seg"><button data-a="trset" data-v="1" class="${D.train?'on':''}">训练日</button><button data-a="trset" data-v="0" class="${D.train?'':'on'}">休息日</button></div></div>`;
-  const done=S.sessions.filter(x=>x.date===VIEW);
-  if(!D.train){
+    <div class="seg"><button data-a="trset" data-v="1" class="${isTr?'on':''}">训练日</button><button data-a="trset" data-v="0" class="${isTr?'':'on'}">休息日</button></div></div>`;
+  if(!isTr){
     h+=`<div class="card rest"><div class="mid">休息日</div><div class="sub" style="margin-top:6px">今天不练。吃够蛋白、睡够，肌肉是在休息时长的。</div></div>`;
   }else{
-    if(!DRAFT){TD=TD||nextDay();DRAFT={}}
+    if(!DRAFT){TD=TD||((done.find(x=>PLAN[x.day])||{}).day)||nextDay(VIEW);DRAFT={};DIRTY=false}
+    const savedSets={};for(const x of done)Object.assign(savedSets,x.sets);
     const P=PLAN[TD];
     if(done.length)h+=`<div class="sub" style="margin:0 2px 8px">这天已经存了：${done.map(x=>x.day).join('、')}</div>`;
     h+=`<div class="row between" style="margin-bottom:12px"><div class="mid">${TD} · ${P.n}</div>
@@ -447,20 +449,21 @@ function vTrain(){
     for(const base of P.ex){
       const opts=[base,...(ALT[base[0]]||[])];
       const [id,n,lo,hi,step]=opts.find(o=>o[0]===alt[base[0]])||base;
-      const uni=UNI.has(id),last=lastSet(id);
+      const uni=UNI.has(id),last=lastSet(id,VIEW),rec=savedSets[id];
       const lr=last?Math.min(last.r,last.rR!=null?last.rR:last.r):0;
       const nw=w=>last?(lr>=hi?+(w+step).toFixed(2):w):0;
-      const cur=DRAFT[id]||{w:nw(last?last.w:0),r:last?(lr>=hi?lo:Math.round(last.r)):lo,ok:false};
+      const cur=DRAFT[id]||(rec?{w:rec.w,r:rec.r,wR:rec.wR,rR:rec.rR,ok:true,saved:true}:{w:nw(last?last.w:0),r:last?(lr>=hi?lo:Math.round(last.r)):lo,ok:false});
       if(uni&&cur.wR==null){cur.wR=last?nw(last.wR!=null?last.wR:last.w):cur.w;cur.rR=last?(lr>=hi?lo:Math.round(last.rR!=null?last.rR:last.r)):cur.r}
       DRAFT[id]=cur;
       let hint='第一次：选一个能做 '+lo+'–'+hi+' 次、留 1–2 次余力的重量';
       let up=false;
       const lastTxt=last?(uni&&last.wR!=null?`左 ${last.w}kg × ${last.r} / 右 ${last.wR}kg × ${last.rR}`:`${last.n>1?'平均 ':''}${last.w}kg × ${last.r}${last.n>1?`（${last.n} 组）`:''}`):'';
       if(last){if(lr>=hi){hint=`上次 ${lastTxt} 到上限 → 今天 +${step}kg`;up=true}else hint=`上次 ${lastTxt} → 今天争取 ${Math.min(hi,Math.floor(lr)+1)} 次`}
+      if(rec){up=false;hint=`这天练的：${rec.all?rec.all.map(a=>a[0]+'×'+a[1]).join(' · ')+'（平均 '+rec.w+'kg × '+rec.r+'）':(rec.wR!=null?`左 ${rec.w}kg × ${rec.r} / 右 ${rec.wR}kg × ${rec.rR}`:rec.w+'kg × '+rec.r)}`}
       const nameH=opts.length>1?`<select class="exsel" data-slot="${base[0]}" style="font-weight:600;padding:6px 8px">${opts.map(o=>`<option value="${o[0]}" ${o[0]===id?'selected':''}>${o[1]}</option>`).join('')}</select>`:n;
       const ctl=(fw,fr,lab)=>`<div class="ctl num">${lab?`<span class="sub" style="width:16px">${lab}</span>`:''}<div class="step"><button data-a="st" data-id="${id}" data-f="${fw}" data-d="${-step}">−</button><input class="trin num" data-id="${id}" data-f="${fw}" type="number" inputmode="decimal" step="any" value="${cur[fw]}"><button data-a="st" data-id="${id}" data-f="${fw}" data-d="${step}">+</button></div>
         <span class="sub">kg</span><span class="x">×</span>
-        <div class="step"><button data-a="st" data-id="${id}" data-f="${fr}" data-d="-1">−</button><input class="trin num" data-id="${id}" data-f="${fr}" type="number" inputmode="numeric" step="1" value="${cur[fr]}" style="width:44px"><button data-a="st" data-id="${id}" data-f="${fr}" data-d="1">+</button></div>
+        <div class="step"><button data-a="st" data-id="${id}" data-f="${fr}" data-d="-1">−</button><input class="trin num" data-id="${id}" data-f="${fr}" type="number" inputmode="numeric" step="any" value="${cur[fr]}" style="width:54px"><button data-a="st" data-id="${id}" data-f="${fr}" data-d="1">+</button></div>
         ${fw==='w'?`<button class="chk ${cur.ok?'on':''}" data-a="exok" data-id="${id}" style="margin-left:auto"></button>`:''}</div>`;
       h+=`<div class="ex"><div class="top"><div class="name">${nameH}</div><div class="rng">${lo}–${hi} 次${uni?' · 左右各一组':''}</div></div>
         <div class="hint ${up?'up':''}">${hint}</div>
@@ -468,7 +471,9 @@ function vTrain(){
     }
     const n=Object.values(DRAFT).filter(x=>x.ok).length;
     h+=`</div><div class="sub" style="margin:-4px 2px 10px">记正式组的平均重量和平均次数（热身组不算），数字可以直接点进去输入。平均次数到区间上限，下次就加重。</div>
-    <button class="solid" data-a="savesess" style="width:100%;padding:13px;${n?'':'opacity:.4'}" ${n?'':'disabled'}>保存 ${n}/${P.ex.length} 个动作</button>`;
+    ${done.some(x=>x.day===TD)&&!DIRTY
+      ?`<div class="savedbox">✓ 已保存 · ${TD} · ${Object.values(DRAFT).filter(x=>x.ok).length} 个动作</div>`
+      :`<button class="solid" data-a="savesess" style="width:100%;padding:13px;${n?'':'opacity:.4'}" ${n?'':'disabled'}>${done.some(x=>x.day===TD)?'保存修改':'保存'} ${n}/${P.ex.length} 个动作</button>`}`;
   }
   const recent=S.sessions.slice(-5).reverse();
   if(recent.length)h+=`<div class="card list" style="margin-top:14px"><div class="lbl" style="margin-bottom:4px">最近</div>${recent.map(x=>`<div class="r"><span>${x.date.slice(5)} · ${PLAN[x.day]?x.day:(x.name||'其他')}${x.src==='strong'?' <span class="pill">Strong</span>':''}</span><span class="sub">${Object.keys(x.sets).length} 个动作</span></div>`).join('')}</div>`;
@@ -687,10 +692,11 @@ document.addEventListener('click',e=>{
     case'cal':CM=null;calSheet();return;
     case'cm':CM=b.dataset.v;calSheet();return;
     case'pick':VIEW=b.dataset.v;CM=null;DRAFT=null;$('#sheet').innerHTML='';break;
-    case'st':{const x=DRAFT[b.dataset.id],f=b.dataset.f;x[f]=Math.max(0,+(x[f]+ +b.dataset.d).toFixed(2));x.ok=true;break}
-    case'exok':DRAFT[b.dataset.id].ok=!DRAFT[b.dataset.id].ok;break;
+    case'st':{const x=DRAFT[b.dataset.id],f=b.dataset.f;x[f]=Math.max(0,+(x[f]+ +b.dataset.d).toFixed(2));x.ok=true;DIRTY=true;break}
+    case'exok':DRAFT[b.dataset.id].ok=!DRAFT[b.dataset.id].ok;DIRTY=true;break;
     case'savesess':{const sets={};for(const id in DRAFT)if(DRAFT[id].ok){const x=DRAFT[id];sets[id]={w:x.w,r:x.r};if(UNI.has(id)&&x.wR!=null){sets[id].wR=x.wR;sets[id].rR=x.rR}}
-      if(!Object.keys(sets).length)return;const dt=VIEW;S.sessions.push({date:dt,day:TD,sets});S.sessions.sort((a,b)=>a.date<b.date?-1:a.date>b.date?1:0);day(dt).train=true;save();toast(TD+' 已保存');TD=null;DRAFT=null;break}
+      if(!Object.keys(sets).length)return;const dt=VIEW;const ex=S.sessions.find(x=>x.date===dt&&x.day===TD);
+      if(ex){for(const id in sets){const old=ex.sets[id];ex.sets[id]=old&&old.w===sets[id].w&&old.r===sets[id].r?old:sets[id]}ex.edited=true}else S.sessions.push({date:dt,day:TD,sets});S.sessions.sort((a,b)=>a.date<b.date?-1:a.date>b.date?1:0);day(dt).train=true;save();toast(TD+' 已保存');TD=null;DRAFT=null;break}
     case'tday':{const v=+b.dataset.v,t=S.settings.trainDays;const i=t.indexOf(v);i>=0?t.splice(i,1):t.push(v);break}
     case'saveset':S.settings.prot=+$('#sp').value||140;S.settings.kcal=+$('#sk').value||2550;save();toast('已保存');break;
     case'addc':{const n=$('#cn').value.trim();if(!n)return toast('写个名称');S.custom.push({n,p:+$('#cp').value||0,k:+$('#ck').value||0,c:+$('#cc').value||0,f:+$('#cf').value||0,fib:0});save();break}
@@ -705,7 +711,7 @@ document.addEventListener('change',e=>{
   if(e.target.id==='strongf'){const f=e.target.files[0];if(!f)return;f.text().then(t=>{try{const r=importStrong(t);render();
     toast(`导入 ${r.n} 次训练`+(r.unmapped.length?`，${r.unmapped.length} 个动作按原名单独记`:''))}catch(err){toast(err.message||'文件不对')}});return}
   if(e.target.classList.contains('exsel')){const alt=S.settings.alt||(S.settings.alt={});const slot=e.target.dataset.slot;const old=alt[slot]||slot;if(DRAFT)delete DRAFT[old];alt[slot]=e.target.value;save();render();return}
-  if(e.target.classList.contains('trin')){const x=DRAFT&&DRAFT[e.target.dataset.id],v=parseFloat(e.target.value);if(x&&v>=0){x[e.target.dataset.f]=/^r/.test(e.target.dataset.f)?Math.round(v):v;x.ok=true}render();return}
+  if(e.target.classList.contains('trin')){const x=DRAFT&&DRAFT[e.target.dataset.id],v=parseFloat(e.target.value);if(x&&v>=0){x[e.target.dataset.f]=/^r/.test(e.target.dataset.f)?Math.round(v*10)/10:v;x.ok=true;DIRTY=true}render();return}
   if(e.target.classList.contains('vsel')){const D=day(VIEW),it=clone(getItems(D,EK));it[+e.target.dataset.i][0]=e.target.value;setItems(D,EK,it);editItems(EK);render();return}
   if(e.target.classList.contains('iin')){const D=day(VIEW),it=clone(getItems(D,EK)),v=parseFloat(e.target.value);
     if(!(v>=0))return editItems(EK);it[+e.target.dataset.i][1]=v;setItems(D,EK,it);editItems(EK);render();return}
