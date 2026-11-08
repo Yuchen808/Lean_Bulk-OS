@@ -64,6 +64,10 @@
     ok('体重存两位小数', day('2026-11-08').w === 68.55, day('2026-11-08').w);
     ok('体重框变绿', $$('#w').classList.contains('saved'), null);
 
+    // 8b. 碳水 / 脂肪显示目标
+    const subs=[...document.querySelectorAll('.stats .sub')].map(x=>x.textContent);
+    ok('碳水和脂肪有目标值', subs.some(x=>/\/ 33\d g/.test(x))&&subs.some(x=>/\/ 7\d g/.test(x)), subs);
+
     // 9. 早餐组合
     $$('[data-a=edit][data-k=bfast]').click();
     $$('[data-a=ip][data-i="1"]').click();

@@ -382,6 +382,7 @@ function render(){
   $('#app').innerHTML=({today:vToday,train:vTrain,trend:vTrend,set:vSet})[TAB]();
 }
 
+function macroGoal(){const k=S.settings.kcal,p=S.settings.prot,f=Math.round(k*0.25/9);return{f,c:Math.round((k-p*4-f*9)/4)}}
 function vToday(){
   const s=VIEW,D=day(s),d=parse(s);
   const {t,plan}=totals(D);
@@ -415,8 +416,8 @@ function vToday(){
     <div class="row" style="align-items:baseline;gap:6px;margin-top:2px"><span class="big">${f0(t.p)}</span><span class="sub">/ ${prot} g</span></div>
     <div class="bar"><i style="width:${pp}%"></i><b style="left:${pm}%"></b></div>
     <div class="stats"><div><div class="lbl">热量</div><div class="mid">${f0(t.k)}</div><div class="sub">/ ${S.settings.kcal}</div></div>
-    <div><div class="lbl">碳水</div><div class="mid">${f0(t.c)}</div><div class="sub">g</div></div>
-    <div><div class="lbl">脂肪</div><div class="mid">${f0(t.f)}</div><div class="sub">g</div></div></div>
+    <div><div class="lbl">碳水</div><div class="mid">${f0(t.c)}</div><div class="sub">/ ${macroGoal().c} g</div></div>
+    <div><div class="lbl">脂肪</div><div class="mid">${f0(t.f)}</div><div class="sub">/ ${macroGoal().f} g</div></div></div>
     ${plan.k<S.settings.kcal-300?`<div class="sub" style="margin-top:10px">按模板吃满约 ${f0(plan.k)} kcal，比 ${S.settings.kcal} 少 ${f0(S.settings.kcal-plan.k)}。不用硬补；体重两周不涨时再从「额外」里加。</div>`:''}</div>`;
   h+=vNut(s,t);
   return h;
@@ -569,6 +570,7 @@ function vSet(){
     <div class="sub" style="margin-top:4px">换手机或清浏览器数据前先导出。建议每周日导出一次存进 iCloud。</div>
     <div class="grid2" style="margin-top:10px"><button data-a="exp">导出 JSON</button><button data-a="imp">导入 JSON</button></div>
     <input type="file" id="impf" accept="application/json" class="hidden"></div>
+  <div class="sub" style="margin:-4px 2px 12px">碳水和脂肪目标自动算：脂肪约占热量 25%，剩下的热量扣掉蛋白都给碳水。</div>
   <div class="foot">肉按生重，米饭按熟重。不推荐蛋白粉，不做医疗判断。</div>`;
 }
 
