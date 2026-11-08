@@ -325,7 +325,42 @@ function verdict(ref){
 }
 const e1rm=(w,r)=>w*(1+r/30);
 function lastSet(id){for(let i=S.sessions.length-1;i>=0;i--){const x=S.sessions[i].sets[id];if(x)return x}return null}
-function nextDay(){const l=S.sessions[S.sessions.length-1];if(!l)return'D1';const n=+l.day[1]%4+1;return'D'+n}
+function nextDay(){for(let i=S.sessions.length-1;i>=0;i--){const d=S.sessions[i].day;if(PLAN[d])return'D'+(+d[1]%4+1)}return'D1'}
+// Strong 动作名 → 这里的动作；没对上的按 Strong 原名单独记
+const STRONG_MAP={
+  'Bench Press (Dumbbell)':'d1a','Lat Pulldown (Machine)':'d1b','Lat Pulldown (Cable)':'d1b',
+  'Squat (Smith Machine)':'d1c','Lateral Raise (Dumbbell)':'d1d','Triceps Extension (Cable)':'d1e',
+  'Incline Bench Press (Smith Machine)':'d2a','Bent Over One Arm Row (Dumbbell)':'d2b',
+  'Seated Wide-Grip Row (Cable)':'d2b_scr','Seated Row (Cable)':'d2b_scr',
+  'Romanian Deadlift (Dumbbell)':'d2c','Bicep Curl (Cable)':'d2d','Calf Press on Leg Press':'d2e',
+  'Bench Press (Smith Machine)':'d3a','Lunge (Dumbbell)':'d3c','Dumbbell Step Up':'d3c',
+  'Face Pull (Cable)':'d3d','Cable Crunch':'d3e',
+  'Seated Overhead Press (Dumbbell)':'d4a','Lying Leg Curl (Machine)':'d4c',
+  'Hammer Curl (Dumbbell)':'d4d','Triceps Pushdown (Cable - Straight Bar)':'d4e'
+};
+function csvRows(t){const out=[];let row=[],f='',q=false;
+  for(let i=0;i<t.length;i++){const c=t[i];
+    if(q){if(c==='"'){if(t[i+1]==='"'){f+='"';i++}else q=false}else f+=c}
+    else if(c==='"')q=true;else if(c===','){row.push(f);f=''}
+    else if(c==='\n'||c==='\r'){if(c==='\r'&&t[i+1]==='\n')i++;row.push(f);f='';if(row.length>1)out.push(row);row=[]}
+    else f+=c}
+  if(f||row.length){row.push(f);if(row.length>1)out.push(row)}return out}
+function importStrong(text){
+  const rows=csvRows(text.replace(/^\uFEFF/,''));const hd=rows.shift()||[];const ix=n=>hd.indexOf(n);
+  const iD=ix('Date'),iN=ix('Workout Name'),iE=ix('Exercise Name'),iO=ix('Set Order'),iW=ix('Weight'),iR=ix('Reps');
+  if(iD<0||iE<0||iO<0||iW<0||iR<0)throw new Error('不是 Strong 导出的 CSV');
+  const wk={};S.exNames=S.exNames||{};const unmapped=new Set();
+  for(const r of rows){const so=r[iO];if(so==='W'||so==='D')continue;
+    const w=parseFloat(r[iW])||0,rp=Math.round(parseFloat(r[iR])||0);if(!rp)continue;
+    const ts=r[iD],nm=r[iE];let id=STRONG_MAP[nm];if(!id){id='sx:'+nm;S.exNames[id]=nm;unmapped.add(nm)}
+    const k=ts;(wk[k]=wk[k]||{ts,name:r[iN],sets:{}}).sets[id]={w,r:rp}}  // 每个动作留最后一组正式组
+  const keep=S.sessions.filter(x=>x.src!=='strong');let n=0;
+  for(const k in wk){const x=wk[k];let best='S',bn=0;
+    for(const d in PLAN){const c=PLAN[d].ex.filter(e=>x.sets[e[0]]||(ALT[e[0]]||[]).some(a=>x.sets[a[0]])).length;if(c>bn){bn=c;best=d}}
+    keep.push({date:x.ts.slice(0,10),day:bn>=2?best:'S',name:x.name,sets:x.sets,src:'strong',ts:x.ts});n++}
+  keep.sort((a,b)=>(a.date+(a.ts||''))<(b.date+(b.ts||''))?-1:1);S.sessions=keep;save();
+  return {n,unmapped:[...unmapped]};
+}
 
 /* ---------- 渲染 ---------- */
 const $=s=>document.querySelector(s);
@@ -433,7 +468,7 @@ function vTrain(){
     <button class="solid" data-a="savesess" style="width:100%;padding:13px;${n?'':'opacity:.4'}" ${n?'':'disabled'}>保存 ${n}/${P.ex.length} 个动作</button>`;
   }
   const recent=S.sessions.slice(-5).reverse();
-  if(recent.length)h+=`<div class="card list" style="margin-top:14px"><div class="lbl" style="margin-bottom:4px">最近</div>${recent.map(x=>`<div class="r"><span>${x.date.slice(5)} · ${x.day}</span><span class="sub">${Object.keys(x.sets).length} 个动作</span></div>`).join('')}</div>`;
+  if(recent.length)h+=`<div class="card list" style="margin-top:14px"><div class="lbl" style="margin-bottom:4px">最近</div>${recent.map(x=>`<div class="r"><span>${x.date.slice(5)} · ${PLAN[x.day]?x.day:(x.name||'其他')}${x.src==='strong'?' <span class="pill">Strong</span>':''}</span><span class="sub">${Object.keys(x.sets).length} 个动作</span></div>`).join('')}</div>`;
   return h;
 }
 
@@ -483,7 +518,9 @@ function vTrend(){
   h+=`<div class="card list"><div class="lbl" style="margin-bottom:4px">每周</div>${rows}</div>`;
   // 力量
   let ex='';
-  for(const[id,n]of ALL_EX){
+  const since=addD(TODAY(),-120),others=[];const seen=new Set(ALL_EX.map(e=>e[0]));
+  for(const x of S.sessions)if(x.date>=since)for(const id in x.sets)if(!seen.has(id)){seen.add(id);others.push([id,(S.exNames||{})[id]||id.replace(/^sx:/,'')])}
+  for(const[id,n]of [...ALL_EX,...others]){
     const p=S.sessions.filter(s=>s.sets[id]).map(s=>[s.date,e1rm(s.sets[id].w,s.sets[id].r)]);
     if(!p.length)continue;
     const first=p[0][1],now=p[p.length-1][1];
@@ -508,6 +545,10 @@ function vSet(){
     <div class="grid2" style="margin-top:8px"><input id="cp" type="number" placeholder="蛋白 g"><input id="ck" type="number" placeholder="kcal"><input id="cc" type="number" placeholder="碳水 g"><input id="cf" type="number" placeholder="脂肪 g"></div>
     <button data-a="addc" style="margin-top:8px;width:100%">添加</button>
     ${S.custom.length?`<div class="list" style="margin-top:8px">${S.custom.map((c,i)=>`<div class="r"><span>${c.n}</span><span class="sub">${c.p}g · ${c.k}kcal <span data-a="rmc" data-i="${i}" style="cursor:pointer">删除</span></span></div>`).join('')}</div>`:''}</div>
+  <div class="card"><div class="lbl">从 Strong 导入训练</div>
+    <div class="sub" style="margin-top:4px">Strong → Profile → 齿轮 → Export Data → CSV，存到「文件」后在这里选。热身组和递减组会跳过，每个动作记最后一组正式组。重复导入会覆盖旧的 Strong 记录，不会重复。</div>
+    <button data-a="simp" style="margin-top:10px;width:100%">选择 Strong CSV</button>
+    <input type="file" id="strongf" accept=".csv,text/csv,text/comma-separated-values" class="hidden"></div>
   <div class="card"><div class="lbl">数据只存在这台手机的浏览器里</div>
     <div class="sub" style="margin-top:4px">换手机或清浏览器数据前先导出。建议每周日导出一次存进 iCloud。</div>
     <div class="grid2" style="margin-top:10px"><button data-a="exp">导出 JSON</button><button data-a="imp">导入 JSON</button></div>
@@ -653,10 +694,13 @@ document.addEventListener('click',e=>{
     case'rmc':S.custom.splice(+b.dataset.i,1);save();break;
     case'exp':{const bl=new Blob([JSON.stringify(S,null,1)],{type:'application/json'});const u=URL.createObjectURL(bl);const l=document.createElement('a');l.href=u;l.download='lean-bulk-'+TODAY()+'.json';l.click();setTimeout(()=>URL.revokeObjectURL(u),2000);break}
     case'imp':$('#impf').click();return;
+    case'simp':$('#strongf').click();return;
   }
   render();
 });
 document.addEventListener('change',e=>{
+  if(e.target.id==='strongf'){const f=e.target.files[0];if(!f)return;f.text().then(t=>{try{const r=importStrong(t);render();
+    toast(`导入 ${r.n} 次训练`+(r.unmapped.length?`，${r.unmapped.length} 个动作按原名单独记`:''))}catch(err){toast(err.message||'文件不对')}});return}
   if(e.target.classList.contains('exsel')){const alt=S.settings.alt||(S.settings.alt={});const slot=e.target.dataset.slot;const old=alt[slot]||slot;if(DRAFT)delete DRAFT[old];alt[slot]=e.target.value;save();render();return}
   if(e.target.classList.contains('trin')){const x=DRAFT&&DRAFT[e.target.dataset.id],v=parseFloat(e.target.value);if(x&&v>=0){x[e.target.dataset.f]=/^r/.test(e.target.dataset.f)?Math.round(v):v;x.ok=true}render();return}
   if(e.target.classList.contains('vsel')){const D=day(VIEW),it=clone(getItems(D,EK));it[+e.target.dataset.i][0]=e.target.value;setItems(D,EK,it);editItems(EK);render();return}
