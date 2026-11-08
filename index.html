@@ -16,11 +16,11 @@
 :root{
   --paper:#f5f5f5;--card:#ffffff;--ink:#111111;--muted:#6b6b6b;--soft:#9a9a9a;
   --rule:rgba(0,0,0,.09);--rule2:rgba(0,0,0,.16);--accent:#e5352b;--fill:#111111;--onfill:#ffffff;
-  --done:#111111;
+  --done:#111111;--ok:#1f8a3b;--okbg:rgba(31,138,59,.08);
 }
 @media (prefers-color-scheme: dark){
   :root{--paper:#0b0b0b;--card:#151515;--ink:#eaeaea;--muted:#a6a6a6;--soft:#8c8c8c;
-  --rule:rgba(255,255,255,.08);--rule2:rgba(255,255,255,.16);--accent:#ff3b30;--fill:#eaeaea;--onfill:#0b0b0b;--done:#eaeaea;}
+  --rule:rgba(255,255,255,.08);--rule2:rgba(255,255,255,.16);--accent:#ff3b30;--fill:#eaeaea;--onfill:#0b0b0b;--done:#eaeaea;--ok:#34c759;--okbg:rgba(52,199,89,.12);}
 }
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
 html,body{margin:0;background:var(--paper);color:var(--ink)}
@@ -40,6 +40,12 @@ h1{font-size:13px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;
 .stats>div+div{border-left:1px solid var(--rule);padding-left:12px}
 input[type=number],input[type=text],select{font:inherit;color:var(--ink);background:transparent;border:1px solid var(--rule2);border-radius:8px;padding:9px 10px;min-width:0}
 input:focus,select:focus{outline:2px solid var(--ink);outline-offset:-1px}
+#w.saved{border-color:var(--ok);background:var(--okbg);color:var(--ok);outline-color:var(--ok)}
+.nut .r{align-items:center;gap:10px}
+.nut .nm{flex:0 0 64px;white-space:nowrap}
+.nut .bar{flex:1;margin-top:0}
+.nut .v{flex:0 0 116px;text-align:right;white-space:nowrap;font-size:12.5px}
+.nut .ok i{background:var(--ok)}
 button{font:inherit;color:var(--ink);background:transparent;border:1px solid var(--rule2);border-radius:8px;padding:9px 12px;cursor:pointer}
 button.solid{background:var(--fill);color:var(--onfill);border-color:var(--fill);font-weight:600}
 button.ghost{border-color:transparent;color:var(--muted);padding:6px 8px}
@@ -116,16 +122,16 @@ const SRC={
 // 220g 熟米饭 + 200g 蔬菜 + 10ml 油
 const BASE={p:8.9,c:72,f:10.1,k:427,fib:6.9};
 const FIXED={
-  pre:{n:'练前',time:'05:40',d:'香蕉 + 全麦吐司',p:4,c:43,f:1,k:200,fib:3.5},
-  snack:{n:'Skyr',time:'15:00',d:'150g Skyr',p:16,c:6,f:0.3,k:95,fib:0}
+  pre:{n:'练前',time:'05:40',d:'香蕉 + 全麦吐司',p:4,c:43,f:1,k:200,fib:5.5,vc:10,va:4,fol:41,ca:46,fe:1.3,pot:520,mg:62,zn:.9},
+  snack:{n:'Skyr',time:'15:00',d:'150g Skyr',p:16,c:6,f:0.3,k:95,fib:0,fol:15,b12:.75,ca:195,fe:.15,pot:225,mg:18,zn:.75}
 };
 const EXTRAS=[
-  {n:'香蕉',p:1.3,c:27,f:.4,k:105,fib:3},
-  {n:'苹果',p:.4,c:25,f:.3,k:95,fib:4},
-  {n:'30g 杏仁',p:6.3,c:6.5,f:15,k:175,fib:3},
-  {n:'贝果',p:10,c:50,f:1.5,k:260,fib:2.5},
-  {n:'150g 米饭',p:4,c:42,f:.4,k:195,fib:.6},
-  {n:'全麦吐司',p:4,c:18,f:1,k:95,fib:3}
+  {n:'香蕉',p:1.3,c:27,f:.4,k:105,fib:3,vc:10,va:4,fol:24,ca:6,fe:.3,pot:420,mg:32,zn:.2},
+  {n:'苹果',p:.4,c:25,f:.3,k:95,fib:4,vc:8,va:5,fol:5,ca:11,fe:.2,pot:190,mg:9,zn:.1},
+  {n:'30g 杏仁',p:6.3,c:6.5,f:15,k:175,fib:3.7,fol:15,ca:80,fe:1.1,pot:220,mg:80,zn:.9},
+  {n:'贝果',p:10,c:50,f:1.5,k:260,fib:2.5,fol:50,ca:20,fe:3,pot:100,mg:25,zn:.8},
+  {n:'150g 米饭',p:4,c:42,f:.4,k:195,fib:.6,fol:4,ca:15,fe:.3,pot:50,mg:18,zn:.75},
+  {n:'全麦吐司',p:4,c:18,f:1,k:95,fib:2.8,fol:17,ca:40,fe:1,pot:100,mg:30,zn:.7}
 ];
 // 早餐食材：每 100g / 100ml；按个 / 根计的用 per = 每个的克数
 const FOOD={
@@ -142,8 +148,61 @@ const FOOD={
 for(const id in SRC){const x=SRC[id];FOOD[id]={n:x.n,unit:'g',step:10,def:x.A,p:x.p,c:0,f:x.f,k:x.k,fib:0,raw:1}}
 Object.assign(FOOD,{
   rice:{n:'米饭',unit:'g',step:20,def:220,p:2.7,c:28,f:.3,k:130,fib:.4,cooked:1},
-  veg:{n:'蔬菜',unit:'g',step:50,def:200,p:1.5,c:5,f:.2,k:25,fib:3}
+  veg:{n:'混合蔬菜',unit:'g',step:50,def:200,p:1.5,c:5,f:.2,k:25,fib:3,veg:1},
+  v_broc:{n:'西兰花',unit:'g',step:50,def:200,p:2.8,c:4,f:.4,k:34,fib:2.6,veg:1},
+  v_spin:{n:'菠菜',unit:'g',step:50,def:150,p:2.9,c:1.4,f:.4,k:23,fib:2.2,veg:1},
+  v_carr:{n:'胡萝卜',unit:'g',step:50,def:100,p:.9,c:7,f:.2,k:41,fib:2.8,veg:1},
+  v_pep:{n:'甜椒',unit:'g',step:50,def:100,p:1,c:4.7,f:.3,k:31,fib:2.1,veg:1},
+  v_tom:{n:'番茄',unit:'g',step:50,def:150,p:.9,c:2.7,f:.2,k:18,fib:1.2,veg:1},
+  v_cuc:{n:'黄瓜',unit:'g',step:50,def:150,p:.7,c:3,f:.1,k:15,fib:.5,veg:1},
+  v_let:{n:'生菜',unit:'g',step:50,def:100,p:1.2,c:1.2,f:.3,k:17,fib:2.1,veg:1},
+  v_cab:{n:'卷心菜',unit:'g',step:50,def:200,p:1.3,c:3.3,f:.1,k:25,fib:2.5,veg:1},
+  v_bean:{n:'四季豆',unit:'g',step:50,def:150,p:1.8,c:4.3,f:.2,k:31,fib:2.7,veg:1},
+  v_mush:{n:'蘑菇',unit:'g',step:50,def:150,p:3.1,c:2.3,f:.3,k:22,fib:1,veg:1},
+  v_cour:{n:'西葫芦',unit:'g',step:50,def:150,p:1.2,c:2.1,f:.3,k:17,fib:1,veg:1},
+  v_bok:{n:'小白菜',unit:'g',step:50,def:200,p:1.5,c:1.2,f:.2,k:13,fib:1,veg:1}
 });
+const VEG_IDS=Object.keys(FOOD).filter(id=>FOOD[id].veg);
+// 微量营养，每 100g / 100ml（USDA / 英国食物成分表的近似值，只作趋势参考）
+const MICRO={
+  egg:{va:160,fol:47,b12:.9,vd:2.5,ca:56,fe:1.75,pot:138,mg:12,zn:1.3},
+  ew:{fol:4,b12:.09,ca:7,fe:.08,pot:163,mg:11},
+  oat:{fol:32,ca:52,fe:4.3,pot:362,mg:138,zn:3.6},
+  milk:{va:20,fol:5,b12:.45,ca:120,pot:150,mg:11,zn:.4},
+  sd:{fol:30,ca:60,fe:1.5,pot:120,mg:25,zn:.8},
+  ban:{vc:8.7,va:3,fol:20,ca:5,fe:.26,pot:358,mg:27,zn:.15},
+  pb:{fol:87,ca:49,fe:1.9,pot:560,mg:170,zn:2.8},
+  skyr:{fol:10,b12:.5,ca:130,fe:.1,pot:150,mg:12,zn:.5},
+  cb:{va:9,fol:4,b12:.2,vd:.1,ca:5,fe:.4,pot:330,mg:28,zn:.7},
+  ct:{va:20,fol:8,b12:.4,vd:.1,ca:8,fe:.8,pot:260,mg:23,zn:1.8},
+  pm5:{fol:3,b12:.7,vd:.5,ca:10,fe:.9,pot:350,mg:24,zn:2.5},
+  pm10:{fol:3,b12:.7,vd:.6,ca:12,fe:.9,pot:300,mg:21,zn:2.4},
+  pt:{b12:.5,vd:.5,ca:5,fe:1,pot:400,mg:27,zn:1.9},
+  sal:{va:58,fol:26,b12:3.2,vd:7,ca:9,fe:.34,pot:360,mg:27,zn:.4},
+  basa:{va:10,b12:1,vd:1,ca:10,fe:.3,pot:200,mg:20,zn:.3},
+  rice:{fol:3,ca:10,fe:.2,pot:35,mg:12,zn:.5},
+  veg:{vc:15,va:200,fol:40,ca:30,fe:.6,pot:250,mg:18,zn:.4},
+  v_broc:{vc:89,va:31,fol:63,ca:47,fe:.7,pot:316,mg:21,zn:.4},
+  v_spin:{vc:28,va:469,fol:194,ca:99,fe:2.7,pot:558,mg:79,zn:.5},
+  v_carr:{vc:6,va:835,fol:19,ca:33,fe:.3,pot:320,mg:12,zn:.2},
+  v_pep:{vc:128,va:157,fol:46,ca:7,fe:.4,pot:211,mg:12,zn:.25},
+  v_tom:{vc:14,va:42,fol:15,ca:10,fe:.3,pot:237,mg:11,zn:.17},
+  v_cuc:{vc:3,va:5,fol:7,ca:16,fe:.3,pot:147,mg:13,zn:.2},
+  v_let:{vc:4,va:436,fol:136,ca:33,fe:1,pot:247,mg:14,zn:.2},
+  v_cab:{vc:37,va:5,fol:43,ca:40,fe:.5,pot:170,mg:12,zn:.2},
+  v_bean:{vc:12,va:35,fol:33,ca:37,fe:1,pot:211,mg:25,zn:.24},
+  v_mush:{vc:2,fol:17,b12:.04,vd:.2,ca:3,fe:.5,pot:318,mg:9,zn:.5},
+  v_cour:{vc:18,va:10,fol:24,ca:16,fe:.4,pot:261,mg:18,zn:.3},
+  v_bok:{vc:45,va:223,fol:66,ca:105,fe:.8,pot:252,mg:19,zn:.2}
+};
+for(const id in MICRO)Object.assign(FOOD[id],MICRO[id]);
+// NHS / 英国 RNI，成年男性每天
+const NUT=[
+  ['fib','膳食纤维','g',30],['vc','维生素 C','mg',40],['va','维生素 A','µg',700],['fol','叶酸','µg',200],
+  ['b12','维生素 B12','µg',1.5],['vd','维生素 D','µg',10],['ca','钙','mg',700],['fe','铁','mg',8.7],
+  ['pot','钾','mg',3500],['mg','镁','mg',300],['zn','锌','mg',9.5]
+];
+const ZERO=()=>{const t={p:0,c:0,f:0,k:0};for(const[x]of NUT)t[x]=0;return t};
 const BF_IDS=['egg','ew','oat','milk','sd','ban','pb','oil','skyr'];
 const MEAT_IDS=Object.keys(SRC),SIDE_IDS=['rice','veg','oil','egg'];
 const BF_PRESETS=[
@@ -197,16 +256,17 @@ function day(s){
 }
 
 /* ---------- 计算 ---------- */
-const clone=a=>a.map(x=>[x[0],x[1]]);
-const fmtAmt=(id,a)=>{const F=FOOD[id];const v=+(+a).toFixed(1);return F.unit==='g'||F.unit==='ml'?`${v}${F.unit}`:`${v} ${F.unit}`};
+const clone=a=>a.map(x=>x.slice());
+const food=it=>it[2]?Object.assign({unit:'g',step:10},it[2]):FOOD[it[0]];
+const fmtAmt=(F,a)=>{const v=+(+a).toFixed(1);return F.unit==='g'||F.unit==='ml'?`${v}${F.unit}`:`${v} ${F.unit}`};
 const NAME={bfast:'早餐',lunch:'午餐',dinner:'晚餐'},TIME={bfast:'07:30',lunch:'12:30',dinner:'19:00'};
 function defMain(D,k){const m=D.meals[k];return [[m.src,m.g!=null?m.g:SRC[m.src][D.tpl]],['rice',220],['veg',200],['oil',10]]}
 function getItems(D,k){if(k==='bfast')return D.bf||S.lastBf||BF_PRESETS[0].items;return D.meals[k].items||defMain(D,k)}
 function setItems(D,k,it){if(k==='bfast'){D.bf=it;S.lastBf=clone(it)}else D.meals[k].items=it;save()}
 function meal(D,k){
-  const items=getItems(D,k),t={p:0,c:0,f:0,k:0,fib:0};
-  for(const[id,a]of items){const F=FOOD[id];if(!F)continue;const g=a*(F.per||1);for(const x in t)t[x]+=F[x]*g/100}
-  const d=items.length?items.map(([id,a])=>{const F=FOOD[id];return `${F.n} ${fmtAmt(id,a)}${F.raw?' 生':F.cooked?' 熟':''}`}).join(' · '):'还没选';
+  const items=getItems(D,k),t=ZERO();
+  for(const it of items){const F=food(it),a=it[1];if(!F)continue;const g=a*(F.per||1);for(const x in t)t[x]+=(F[x]||0)*g/100}
+  const d=items.length?items.map(it=>{const F=food(it);return `${F.n} ${fmtAmt(F,it[1])}${F.raw?' 生':F.cooked?' 熟':''}`}).join(' · '):'还没选';
   return {n:NAME[k],time:TIME[k],d,...t};
 }
 function slots(D){
@@ -219,7 +279,7 @@ function slots(D){
   return out;
 }
 function totals(D){
-  const t={p:0,c:0,f:0,k:0,fib:0},plan={p:0,k:0};
+  const t=ZERO(),plan={p:0,k:0};
   for(const[k,m]of slots(D)){plan.p+=m.p;plan.k+=m.k;if(D.done[k])for(const x in t)t[x]+=m[x]||0}
   for(const e of D.extras)for(const x in t)t[x]+=e[x]||0;
   return {t,plan};
@@ -274,7 +334,7 @@ function vToday(){
   <div class="row"><button class="ghost" data-a="prev">‹</button>${sameDay?'':'<button class="ghost" data-a="today">今天</button>'}<button class="ghost" data-a="next" ${sameDay?'disabled style="opacity:.3"':''}>›</button></div></div>`;
   if(v)h+=`<div class="card verdict"><div class="lbl">本周结论</div><div class="mid" style="margin-top:4px">${v.t}</div><div class="sub" style="margin-top:4px">${v.d}${v.delta!=null?` 周变化 ${v.delta>=0?'+':''}${v.delta.toFixed(2)} kg。`:''}</div></div>`;
   h+=`<div class="card"><div class="lbl">晨重</div>
-    <div class="row" style="margin-top:8px"><input id="w" type="number" inputmode="decimal" step="0.1" placeholder="${(weights().slice(-1)[0]||[0,68])[1]}" value="${D.w||''}" style="width:120px;font-size:22px;font-weight:700" class="num"><span class="sub">kg</span>
+    <div class="row" style="margin-top:8px"><input id="w" type="number" inputmode="decimal" step="0.01" placeholder="${(weights().slice(-1)[0]||[0,68])[1]}" value="${D.w||''}" data-saved="${D.w||''}" style="width:130px;font-size:22px;font-weight:700" class="num ${D.w?'saved':''}"><span class="sub">kg</span>
     <button class="solid" data-a="w" style="margin-left:auto">${D.w?'更新':'记录'}</button></div>
     <div class="stats num"><div><div class="lbl">7 天均重</div><div class="mid">${f1(a7)}</div></div>
     <div><div class="lbl">比上周</div><div class="mid">${a7!=null&&a7p!=null?((a7-a7p>=0?'+':'')+(a7-a7p).toFixed(2)):'—'}</div></div>
@@ -297,7 +357,20 @@ function vToday(){
     <div><div class="lbl">碳水</div><div class="mid">${f0(t.c)}</div><div class="sub">g</div></div>
     <div><div class="lbl">脂肪</div><div class="mid">${f0(t.f)}</div><div class="sub">g</div></div></div>
     ${plan.k<S.settings.kcal-300?`<div class="sub" style="margin-top:10px">按模板吃满约 ${f0(plan.k)} kcal，比 ${S.settings.kcal} 少 ${f0(S.settings.kcal-plan.k)}。不用硬补；体重两周不涨时再从「额外」里加。</div>`:''}</div>`;
+  h+=vNut(s,t);
   return h;
+}
+
+function oilyWeek(s){const m=monday(s);let n=0;for(let j=0;j<7;j++){const D=S.days[addD(m,j)];if(!D)continue;
+  for(const k of['lunch','dinner'])if(D.done[k]&&getItems(D,k).some(([id,a])=>id==='sal'&&a>=100))n++}return n}
+function vNut(s,t){
+  const fmt=v=>v>=10?f0(v):v.toFixed(1);
+  const rows=NUT.map(([x,n,u,goal])=>{const v=t[x]||0,pc=Math.min(100,v/goal*100),ok=v>=goal;
+    return `<div class="r ${ok?'ok':''}"><span class="nm">${n}</span><div class="bar"><i style="width:${pc}%"></i></div><span class="v num ${ok?'':'sub'}">${fmt(v)} / ${goal} ${u}</span></div>`}).join('');
+  const oily=oilyWeek(s);
+  return `<div class="card list nut"><div class="row between" style="margin-bottom:4px"><div class="lbl">微量营养 · NHS 参考</div><div class="sub">按勾了的餐算</div></div>${rows}
+   <div class="r ${oily>=1?'ok':''}"><span class="nm">油性鱼</span><div class="bar"><i style="width:${Math.min(100,oily*100)}%"></i></div><span class="v num ${oily>=1?'':'sub'}">本周 ${oily} / 1 份</span></div>
+   <div class="sub" style="margin-top:8px">目标是 NHS / 英国 RNI 成年男性每日参考量。维生素 D 很难从食物吃够，NHS 建议 10 月到 3 月每天补 10µg。数值是估算，只看趋势，不做医疗判断。</div></div>`;
 }
 
 function vTrain(){
@@ -389,8 +462,71 @@ function vSet(){
   <div class="foot">肉按生重，米饭按熟重。不推荐蛋白粉，不做医疗判断。</div>`;
 }
 
-let EK='bfast';
-function chips(ids,have,lbl){const l=ids.filter(id=>!have.has(id));return l.length?`<div class="lbl" style="margin-top:14px">${lbl}</div><div class="chips">${l.map(id=>`<button data-a="iadd" data-v="${id}">+ ${FOOD[id].n}</button>`).join('')}</div>`:''}
+let EK='bfast',FORM=null;
+// 自定义估算：按名字里的关键词找近似值（每 100g，按通常吃的状态）；越具体的放越前面
+const EST=[
+  [/希腊酸奶|greek/i,{p:9,c:4,f:5,k:97,ca:110}],
+  [/酸奶|yogh?urt|skyr/i,{p:5,c:6,f:3,k:70,ca:150}],
+  [/花生酱|peanut butter/i,{p:25,c:13,f:50,k:600,fib:6,mg:170}],
+  [/蛋白粉|whey|protein powder/i,{p:78,c:8,f:6,k:390,ca:400}],
+  [/蛋白棒|protein bar/i,{p:30,c:40,f:15,k:380,fib:5}],
+  [/薯片|crisps|chips/i,{p:6,c:53,f:33,k:530,fib:4}],
+  [/红薯|sweet potato/i,{p:1.6,c:20,f:.1,k:86,fib:3,va:700,vc:2,pot:340}],
+  [/土豆|马铃薯|potato/i,{p:2,c:17,f:.1,k:77,fib:2.2,vc:20,pot:420}],
+  [/炒饭|fried rice/i,{p:5,c:30,f:6,k:190,fib:1}],
+  [/拌饭|bibimbap|韩餐/i,{p:6,c:20,f:5,k:150,fib:2,vc:5,va:100}],
+  [/寿司|sushi/i,{p:6,c:30,f:2,k:150,fib:.5}],
+  [/米饭|rice/i,{p:2.7,c:28,f:.3,k:130,fib:.4}],
+  [/意面|pasta|spaghetti|penne/i,{p:5.8,c:31,f:.9,k:158,fib:1.8}],
+  [/面条|拉面|乌冬|noodle|ramen|udon/i,{p:5,c:25,f:1,k:130,fib:1}],
+  [/饺子|dumpling|包子|bao/i,{p:8,c:25,f:8,k:200,fib:1.5}],
+  [/披萨|pizza/i,{p:11,c:33,f:10,k:266,fib:2,ca:190}],
+  [/汉堡|burger/i,{p:13,c:24,f:12,k:260,fib:1.5,fe:2}],
+  [/三明治|sandwich|wrap|卷/i,{p:11,c:30,f:9,k:250,fib:2}],
+  [/面包|吐司|bagel|bread|toast|sourdough|croissant|可颂/i,{p:9,c:47,f:3,k:250,fib:3,ca:60,fe:1.5}],
+  [/燕麦|oat|granola/i,{p:13,c:60,f:7,k:379,fib:10,fe:4,mg:138}],
+  [/蛋糕|cake|饼干|biscuit|cookie|brownie|muffin/i,{p:5,c:60,f:20,k:450,fib:1.5}],
+  [/巧克力|chocolate/i,{p:6,c:55,f:31,k:540,fib:5,fe:3,mg:100}],
+  [/坚果|杏仁|腰果|核桃|开心果|almond|cashew|walnut|nut/i,{p:20,c:20,f:50,k:600,fib:8,mg:250,zn:3,ca:150}],
+  [/牛油果|avocado/i,{p:2,c:9,f:15,k:160,fib:7,pot:485,fol:81}],
+  [/蓝莓|草莓|树莓|莓|berr/i,{p:.7,c:14,f:.3,k:57,fib:2.4,vc:30}],
+  [/橙|橘|orange|clementine/i,{p:.9,c:12,f:.1,k:47,fib:2.4,vc:53}],
+  [/苹果|apple/i,{p:.3,c:14,f:.2,k:52,fib:2.4,vc:5}],
+  [/香蕉|banana/i,{p:1.1,c:23,f:.3,k:89,fib:2.6,vc:9,pot:358}],
+  [/葡萄|grape|芒果|mango|菠萝|pineapple|水果|fruit/i,{p:.7,c:15,f:.3,k:62,fib:1.5,vc:25}],
+  [/沙拉|salad/i,{p:2,c:5,f:5,k:70,fib:2,vc:15,va:150}],
+  [/汤|soup/i,{p:2,c:5,f:2,k:45,fib:1}],
+  [/咖喱|curry/i,{p:8,c:10,f:8,k:150,fib:2}],
+  [/豆腐|tofu/i,{p:12,c:2,f:7,k:120,ca:350,fe:2,mg:60}],
+  [/奶酪|芝士|cheese|halloumi|feta/i,{p:25,c:1,f:33,k:400,ca:700,b12:1.1,zn:3}],
+  [/拿铁|latte|cappuccino|flat white/i,{p:3,c:4.5,f:3.5,k:60,ca:110}],
+  [/牛奶|milk/i,{p:3.5,c:4.8,f:1.7,k:47,ca:120,b12:.45}],
+  [/果汁|juice/i,{p:.5,c:10,f:0,k:45,vc:30}],
+  [/可乐|coke|soda|汽水/i,{p:0,c:10.6,f:0,k:42}],
+  [/啤酒|beer|lager/i,{p:.5,c:3.6,f:0,k:43}],
+  [/三文鱼|salmon/i,{p:20,c:0,f:13,k:200,vd:7,b12:3.2}],
+  [/金枪鱼|tuna/i,{p:25,c:0,f:1,k:116,vd:2,b12:2.5}],
+  [/虾|prawn|shrimp/i,{p:20,c:0,f:1,k:90,b12:1.1,zn:1.3}],
+  [/鳕鱼|cod|haddock/i,{p:18,c:0,f:.7,k:82,b12:1}],
+  [/鱼|fish/i,{p:18,c:0,f:3,k:100,b12:1.5,vd:1}],
+  [/牛|beef|steak/i,{p:21,c:0,f:10,k:176,fe:2.6,zn:4.5,b12:2}],
+  [/羊|lamb/i,{p:19,c:0,f:17,k:235,fe:1.6,zn:3.5,b12:2.3}],
+  [/猪|pork|bacon|培根|火腿|ham/i,{p:21,c:0,f:8,k:160,b12:.7,zn:2}],
+  [/鸡|chicken|turkey|火鸡/i,{p:25,c:0,f:5,k:150,b12:.3,zn:1}],
+  [/鸡蛋|蛋|egg/i,{p:12.6,c:.7,f:9.5,k:143,b12:.9,vd:2.5}],
+  [/蔬菜|veg|菜/i,{p:1.5,c:5,f:.2,k:25,fib:3,vc:15,va:200,fol:40}]
+];
+function estimate(name){for(const[re,v]of EST)if(re.test(name))return v;return null}
+function customForm(){
+  if(!FORM)return `<div class="lbl" style="margin-top:14px">自定义</div><div class="chips"><button data-a="cform" data-v="est">+ 自定义估算</button><button data-a="cform" data-v="full">+ 完全自定义（看包装）</button></div>`;
+  const inp=(id,ph,t='number')=>`<input id="${id}" type="${t}" ${t==='number'?'inputmode="decimal"':''} placeholder="${ph}" style="width:100%">`;
+  return `<div class="card" style="margin:14px 0 0;padding:12px">
+    <div class="lbl">${FORM==='est'?'自定义估算：写名字和重量，我按常见食物估':'完全自定义：照包装背面填，每 100g'}</div>
+    <div class="grid2" style="margin-top:8px">${inp('cxn','名称，如 牛排 / Pret 鸡肉三明治','text')}${inp('cxg','吃了多少 g')}</div>
+    ${FORM==='full'?`<div class="grid2" style="margin-top:8px">${inp('cxp','蛋白 g')}${inp('cxc','碳水 g')}${inp('cxf','脂肪 g')}${inp('cxk','kcal（空着自动算）')}${inp('cxfib','纤维 g（可选）')}</div>`:''}
+    <div class="row" style="margin-top:10px"><button class="solid" data-a="cxadd" style="flex:1">加入</button><button class="ghost" data-a="cform" data-v="">取消</button></div></div>`;
+}
+function chips(ids,have,lbl){const l=ids.filter(id=>id==='veg'?VEG_IDS.some(v=>!have.has(v)):!have.has(id));return l.length?`<div class="lbl" style="margin-top:14px">${lbl}</div><div class="chips">${l.map(id=>`<button data-a="iadd" data-v="${id}">+ ${id==='veg'?'蔬菜':FOOD[id].n}</button>`).join('')}</div>`:''}
 function editItems(k){
   EK=k;const D=day(VIEW),items=getItems(D,k),cur=meal(D,k),have=new Set(items.map(x=>x[0]));
   const top=k==='bfast'
@@ -400,14 +536,15 @@ function editItems(k){
    <div class="row between"><div class="mid">${NAME[k]}</div><button class="ghost" data-a="close">完成</button></div>
    ${top}
    <div class="lbl" style="margin-top:14px">这一顿</div>
-   ${items.map(([id,a],i)=>{const F=FOOD[id];return `<div class="row num" style="padding:8px 0;border-top:1px solid var(--rule);gap:6px">
-     <div style="flex:1;min-width:0;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${F.n}${F.raw?' <span class="sub" style="font-weight:400">生重</span>':F.cooked?' <span class="sub" style="font-weight:400">熟重</span>':''}</div>
+   ${items.map((it,i)=>{const id=it[0],a=it[1],F=food(it);return `<div class="row num" style="padding:8px 0;border-top:1px solid var(--rule);gap:6px">
+     <div style="flex:1;min-width:0;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${F.veg?`<select class="vsel" data-i="${i}" style="max-width:100%;padding:7px 6px;font-weight:600">${VEG_IDS.map(v=>`<option value="${v}" ${v===id?'selected':''} ${v!==id&&items.some(x=>x[0]===v)?'disabled':''}>${FOOD[v].n}</option>`).join('')}</select>`:F.n}${it[2]?` <span class="sub" style="font-weight:400">${it[2].est?'估算':'自定义'}</span>`:''}${F.raw?' <span class="sub" style="font-weight:400">生重</span>':F.cooked?' <span class="sub" style="font-weight:400">熟重</span>':''}</div>
      <div class="step" style="flex:0 0 auto"><button data-a="is" data-i="${i}" data-d="${-F.step}" style="padding:8px 10px">−</button>
      <input class="iin num" data-i="${i}" type="number" inputmode="decimal" step="any" value="${+(+a).toFixed(1)}" style="width:50px;border:0;border-radius:0;text-align:center;font-weight:600;padding:8px 0">
      <button data-a="is" data-i="${i}" data-d="${F.step}" style="padding:8px 10px">+</button></div>
      <span class="sub" style="flex:0 0 20px">${F.unit}</span>
      <button class="ghost" data-a="irm" data-i="${i}" aria-label="删除" style="flex:0 0 auto;padding:6px 4px">×</button></div>`}).join('')||'<div class="sub" style="margin-top:6px">还没选，点下面的食材。</div>'}
    ${k==='bfast'?chips(BF_IDS,have,'加一样'):chips(MEAT_IDS,have,'加肉 / 鱼（可以混合）')+chips(SIDE_IDS,have,'加别的')}
+   ${customForm()}
    <div class="sub num" style="margin-top:12px">这一顿 ≈ 蛋白 ${f0(cur.p)}g · ${f0(cur.k)} kcal · 碳水 ${f0(cur.c)}g · 脂肪 ${f0(cur.f)}g</div>
    <div class="sub" style="margin-top:4px">${k==='bfast'?'改过的组合会记住，明天默认还是它。':'肉按生重，米饭按熟重。切换 A/B 模板会恢复成模板。'}</div>
   </div></div>`;
@@ -423,19 +560,28 @@ document.addEventListener('click',e=>{
   switch(a){
     case'ip':setItems(D,EK,clone(BF_PRESETS[+b.dataset.i].items));editItems(EK);render();return;
     case'ireset':delete D.meals[EK].items;delete D.meals[EK].g;save();editItems(EK);render();return;
+    case'cform':FORM=b.dataset.v||null;editItems(EK);return;
+    case'cxadd':{const n=($('#cxn').value||'').trim(),g=parseFloat($('#cxg').value);
+      if(!n||!(g>0))return toast('写名称和克数');
+      let o;
+      if(FORM==='est'){const v=estimate(n);if(!v)return toast('认不出来，用「完全自定义」');o={n,...v,est:1}}
+      else{const num=id=>parseFloat($('#'+id).value)||0;const pp=num('cxp'),cc=num('cxc'),ff=num('cxf');
+        o={n,p:pp,c:cc,f:ff,k:num('cxk')||Math.round(pp*4+cc*4+ff*9),fib:num('cxfib')}}
+      const it=clone(getItems(D,EK));it.push(['cx',g,o]);setItems(D,EK,it);FORM=null;editItems(EK);render();
+      toast(`${n} ${g}g ≈ 蛋白 ${f0(o.p*g/100)}g · ${f0(o.k*g/100)} kcal`);return}
     case'is':{const it=clone(getItems(D,EK)),i=+b.dataset.i;it[i][1]=Math.max(0,+(it[i][1]+ +b.dataset.d).toFixed(2));setItems(D,EK,it);editItems(EK);render();return}
     case'irm':{const it=clone(getItems(D,EK));it.splice(+b.dataset.i,1);setItems(D,EK,it);editItems(EK);render();return}
-    case'iadd':{const it=clone(getItems(D,EK)),id=b.dataset.v;let amt=FOOD[id].def;
+    case'iadd':{const it=clone(getItems(D,EK));let id=b.dataset.v;if(id==='veg')id=VEG_IDS.find(v=>!it.some(x=>x[0]===v));let amt=FOOD[id].def;
       if(SRC[id]){amt=SRC[id][D.tpl];if(it.some(x=>SRC[x[0]]))amt=Math.round(amt/20)*10}
       it.push([id,amt]);setItems(D,EK,it);editItems(EK);render();return}
     case'prev':VIEW=addD(VIEW,-1);break;
     case'next':VIEW=addD(VIEW,1);break;
     case'today':VIEW=TODAY();break;
-    case'w':{const v=parseFloat($('#w').value);if(!(v>30&&v<200))return toast('输入晨重 kg');D.w=Math.round(v*10)/10;save();toast('已记录 '+D.w+' kg');break}
+    case'w':{const v=parseFloat($('#w').value);if(!(v>30&&v<200))return toast('输入晨重 kg');D.w=Math.round(v*100)/100;save();toast('已记录 '+D.w+' kg');break}
     case'tpl':D.tpl=b.dataset.v;for(const k of['lunch','dinner']){delete D.meals[k].g;delete D.meals[k].items}save();break;
     case'train':D.train=!D.train;if(!D.train)delete D.done.pre;save();break;
     case'eat':D.done[b.dataset.k]=!D.done[b.dataset.k];if(!D.done[b.dataset.k])delete D.done[b.dataset.k];save();break;
-    case'edit':editItems(b.dataset.k);return;
+    case'edit':FORM=null;editItems(b.dataset.k);return;
     case'close':$('#sheet').innerHTML='';break;
     case'addx':{const e2=[...EXTRAS,...S.custom][+b.dataset.i];D.extras.push({...e2});save();break}
     case'rmx':D.extras.splice(+b.dataset.i,1);save();break;
@@ -454,11 +600,13 @@ document.addEventListener('click',e=>{
   render();
 });
 document.addEventListener('change',e=>{
+  if(e.target.classList.contains('vsel')){const D=day(VIEW),it=clone(getItems(D,EK));it[+e.target.dataset.i][0]=e.target.value;setItems(D,EK,it);editItems(EK);render();return}
   if(e.target.classList.contains('iin')){const D=day(VIEW),it=clone(getItems(D,EK)),v=parseFloat(e.target.value);
     if(!(v>=0))return editItems(EK);it[+e.target.dataset.i][1]=v;setItems(D,EK,it);editItems(EK);render();return}
   if(e.target.id!=='impf')return;const f=e.target.files[0];if(!f)return;
   f.text().then(t=>{try{const o=JSON.parse(t);if(!o.days)throw 0;if(!confirm('覆盖这台设备上的数据？'))return;S=Object.assign(load(),o);save();render();toast('已导入')}catch(_){toast('文件不对')}});
 });
+document.addEventListener('input',e=>{if(e.target.id==='w')e.target.classList.toggle('saved',e.target.value!==''&&parseFloat(e.target.value)===parseFloat(e.target.dataset.saved))});
 document.addEventListener('keydown',e=>{if(e.key==='Enter'&&e.target.id==='w'){document.querySelector('[data-a=w]').click()}});
 render();
 if('serviceWorker' in navigator&&location.protocol==='https:')navigator.serviceWorker.register('sw.js').catch(()=>{});
