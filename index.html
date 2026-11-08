@@ -159,6 +159,7 @@ const FOOD={
   sd:{n:'Sourdough',unit:'g',step:25,def:50,p:9,c:50,f:1.5,k:260,fib:3},
   ban:{n:'香蕉',unit:'根',per:120,step:.5,def:1,p:1.1,c:23,f:.3,k:89,fib:2.6},
   pb:{n:'花生酱',unit:'g',step:5,def:15,p:25,c:13,f:50,k:600,fib:6},
+  honey:{n:'蜂蜜',unit:'g',step:5,def:10,p:.3,c:82,f:0,k:304,fib:0},
   oil:{n:'油',unit:'ml',step:5,def:5,p:0,c:0,f:91,k:820,fib:0},
   skyr:{n:'Skyr',unit:'g',step:50,def:150,p:11,c:4,f:.2,k:63,fib:0}
 };
@@ -227,6 +228,12 @@ const NUT=[
 ];
 const ZERO=()=>{const t={p:0,c:0,f:0,k:0};for(const[x]of NUT)t[x]=0;return t};
 const BF_IDS=['egg','ew','oat','milk','sd','ban','pb','oil','skyr'];
+// 自定义加餐能直接选的食材
+const SNACK_IDS=['sd','pb','honey','ban','skyr','oat','milk','egg','rice'];
+function sumItems(items){const t=ZERO();for(const it of items){const F=food(it);if(!F)continue;const g=it[1]*(F.per||1);for(const x in t)t[x]+=(F[x]||0)*g/100}return t}
+const descItems=items=>items.map(it=>{const F=food(it);return `${F.n} ${fmtAmt(F,it[1])}`}).join(' · ');
+// 自定义加餐 → 记进某天的「额外」：存当时算好的营养 + 配方
+function snackEntry(sn){const t=sumItems(sn.items);for(const x in t)t[x]=Math.round(t[x]*10)/10;return {n:sn.n,...t,snack:1,items:sn.items.map(x=>x.slice())}}
 const MEAT_IDS=Object.keys(SRC),SIDE_IDS=['rice','tato','swp','veg','oil','egg'];
 const BF_PRESETS=[
   {n:'燕麦蛋白',items:[['egg',1],['ew',250],['oat',60],['milk',200]]},
@@ -431,7 +438,7 @@ function vToday(){
   }
   if(D.extras.length)h+=`<div class="meal"><div style="width:28px"></div><div class="t"><div class="n">额外</div><div class="d">${D.extras.map((e,i)=>`<span data-a="rmx" data-i="${i}" style="cursor:pointer">${e.n} ×</span>`).join(' · ')}</div></div><div class="p num">${f0(D.extras.reduce((a,e)=>a+e.p,0))}g</div></div>`;
   const ALLX=[...EXTRAS,...S.custom];
-  h+=`<div class="lbl" style="margin-top:12px">加餐</div><div class="chips">${ALLX.map((e,i)=>e.snack?`<button data-a="addx" data-i="${i}">+ ${e.n}</button>`:'').join('')}</div>
+  h+=`<div class="lbl" style="margin-top:12px">加餐</div><div class="chips">${ALLX.map((e,i)=>e.snack?`<button data-a="addx" data-i="${i}">+ ${e.n}</button>`:'').join('')}<button class="ghost" data-a="snew" style="border:1px dashed var(--rule2)">＋ 自定义加餐</button></div>
   <div class="lbl" style="margin-top:10px">零碎</div><div class="chips">${ALLX.map((e,i)=>e.snack?'':`<button data-a="addx" data-i="${i}">+ ${e.n}</button>`).join('')}</div></div>`;
   h+=`<div class="card num"><div class="row between"><div class="lbl">蛋白</div><div class="sub">计划 ${f0(plan.p)}g</div></div>
     <div class="row" style="align-items:baseline;gap:6px;margin-top:2px"><span class="big">${f0(t.p)}</span><span class="sub">/ ${prot} g</span></div>
@@ -583,7 +590,7 @@ function vSet(){
     <input id="cn" type="text" placeholder="名称，如 希腊酸奶 200g" style="width:100%;margin-top:8px">
     <div class="grid2" style="margin-top:8px"><input id="cp" type="number" placeholder="蛋白 g"><input id="ck" type="number" placeholder="kcal"><input id="cc" type="number" placeholder="碳水 g"><input id="cf" type="number" placeholder="脂肪 g"></div>
     <button data-a="addc" style="margin-top:8px;width:100%">添加</button>
-    ${S.custom.length?`<div class="list" style="margin-top:8px">${S.custom.map((c,i)=>`<div class="r"><span>${c.n}</span><span class="sub">${c.p}g · ${c.k}kcal <span data-a="rmc" data-i="${i}" style="cursor:pointer">删除</span></span></div>`).join('')}</div>`:''}</div>
+    ${S.custom.length?`<div class="list" style="margin-top:8px">${S.custom.map((c,i)=>{const t=c.items?sumItems(c.items):c;return `<div class="r"><span>${c.n}${c.items?' <span class="pill">加餐</span>':''}</span><span class="sub">${f0(t.p)}g · ${f0(t.k)}kcal ${c.items?`<span data-a="sedit" data-i="${i}" style="cursor:pointer">改</span> `:''}<span data-a="rmc" data-i="${i}" style="cursor:pointer">删除</span></span></div>`}).join('')}</div>`:''}</div>
   <div class="card"><div class="lbl">从 Strong 导入训练</div>
     <div class="sub" style="margin-top:4px">Strong → Profile → 齿轮 → Export Data → CSV，存到「文件」后在这里选。热身组和递减组会跳过，每个动作取所有正式组的平均重量和平均次数。同一次训练重复导入会覆盖，不会重复。</div>
     <button data-a="simp" style="margin-top:10px;width:100%">选择 Strong CSV</button>
@@ -684,6 +691,30 @@ function editItems(k){
   </div></div>`;
 }
 
+// 自定义加餐：几样食材按克数拼起来，可以存成常用的一键加
+let SN=null;
+function snackSheet(){
+  const t=sumItems(SN.items),have=new Set(SN.items.map(x=>x[0]));
+  const left=SNACK_IDS.filter(id=>!have.has(id));
+  $('#sheet').innerHTML=`<div class="sheet" data-a="close"><div>
+   <div class="row between"><div class="mid">${SN.idx!=null?'改加餐':'自定义加餐'}</div><button class="ghost" data-a="close">取消</button></div>
+   <input id="snn" type="text" placeholder="名字，如 Sourdough 蜂蜜花生酱" value="${(SN.n||'').replace(/"/g,'&quot;')}" style="width:100%;margin-top:10px">
+   <div class="lbl" style="margin-top:14px">食材</div>
+   ${SN.items.map((it,i)=>{const F=food(it);return `<div class="row num" style="padding:8px 0;border-top:1px solid var(--rule);gap:6px">
+     <div style="flex:1;min-width:0;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${F.n}${it[2]?' <span class="sub" style="font-weight:400">估算</span>':''}</div>
+     <div class="step" style="flex:0 0 auto"><button data-a="ss" data-i="${i}" data-d="${-F.step}" style="padding:8px 10px">−</button>
+     <input class="sin num" data-i="${i}" type="number" inputmode="decimal" step="any" value="${+(+it[1]).toFixed(1)}" style="width:50px;border:0;border-radius:0;text-align:center;font-weight:600;padding:8px 0">
+     <button data-a="ss" data-i="${i}" data-d="${F.step}" style="padding:8px 10px">+</button></div>
+     <span class="sub" style="flex:0 0 20px">${F.unit}</span>
+     <button class="ghost" data-a="srm" data-i="${i}" aria-label="删除" style="flex:0 0 auto;padding:6px 4px">×</button></div>`}).join('')||'<div class="sub" style="margin-top:6px">点下面的食材，或者写一样别的。</div>'}
+   ${left.length?`<div class="chips">${left.map(id=>`<button data-a="sadd" data-v="${id}">+ ${FOOD[id].n}</button>`).join('')}</div>`:''}
+   <div class="grid2" style="margin-top:10px"><input id="sxn" type="text" placeholder="别的，如 黑巧克力"><div class="row" style="gap:6px"><input id="sxg" type="number" inputmode="decimal" placeholder="g" style="flex:1;width:0"><button data-a="sxadd">加</button></div></div>
+   <div class="sub num" style="margin-top:12px">合计 ≈ 蛋白 ${f0(t.p)}g · ${f0(t.k)} kcal · 碳水 ${f0(t.c)}g · 脂肪 ${f0(t.f)}g</div>
+   <label class="row" style="gap:8px;margin-top:12px"><button class="chk ${SN.keep?'on':''}" data-a="skeep"></button>存成常用加餐，下次一键加</label>
+   <div class="row" style="margin-top:12px">${SN.idx!=null?`<button class="solid" data-a="ssave" style="flex:1">保存</button><button data-a="slog" style="flex:1">保存并记进今天</button>`:`<button class="solid" data-a="slog" style="flex:1">记进今天</button>`}</div>
+  </div></div>`;
+}
+
 /* ---------- 交互 ---------- */
 document.addEventListener('click',e=>{
   const nb=e.target.closest('nav button');if(nb){TAB=nb.dataset.tab;render();scrollTo(0,0);return}
@@ -719,7 +750,21 @@ document.addEventListener('click',e=>{
     case'close':$('#sheet').innerHTML='';break;
     case'water':D.water=Math.max(0,(D.water||0)+ +b.dataset.v);save();break;
     case'tick':D[b.dataset.v]=!D[b.dataset.v];save();break;
-    case'addx':{const e2=[...EXTRAS,...S.custom][+b.dataset.i];D.extras.push({...e2});save();break}
+    case'addx':{const e2=[...EXTRAS,...S.custom][+b.dataset.i];D.extras.push(e2.items?snackEntry(e2):{...e2});save();break}
+    case'snew':SN={n:'',items:[],keep:true,idx:null};snackSheet();return;
+    case'sedit':{const c=S.custom[+b.dataset.i];SN={n:c.n,items:clone(c.items),keep:true,idx:+b.dataset.i};snackSheet();return}
+    case'sadd':{const id=b.dataset.v;SN.items.push([id,FOOD[id].def]);snackSheet();return}
+    case'ss':{const i=+b.dataset.i;SN.items[i][1]=Math.max(0,+(SN.items[i][1]+ +b.dataset.d).toFixed(2));snackSheet();return}
+    case'srm':SN.items.splice(+b.dataset.i,1);snackSheet();return;
+    case'skeep':SN.keep=!SN.keep;snackSheet();return;
+    case'sxadd':{const n=($('#sxn').value||'').trim(),g=parseFloat($('#sxg').value);
+      if(!n||!(g>0))return toast('写名称和克数');const v=estimate(n);if(!v)return toast('认不出来，换个说法');
+      SN.items.push(['cx',g,{n,...v,est:1}]);snackSheet();return}
+    case'ssave':case'slog':{if(!SN.items.length)return toast('先加食材');
+      const n=SN.n.trim()||descItems(SN.items).slice(0,24);const rec={n,items:clone(SN.items),snack:1};
+      if(SN.idx!=null)S.custom[SN.idx]=rec;else if(SN.keep)S.custom.push(rec);
+      if(a==='slog'){D.extras.push(snackEntry(rec));const t=sumItems(rec.items);toast(`${n} ≈ 蛋白 ${f0(t.p)}g · ${f0(t.k)} kcal`)}else toast('已保存');
+      save();SN=null;$('#sheet').innerHTML='';break}
     case'rmx':D.extras.splice(+b.dataset.i,1);save();break;
     case'td':TD=b.dataset.v;DRAFT=null;break;
     case'trset':D.train=b.dataset.v==='1';if(!D.train)delete D.done.pre;save();break;
@@ -752,16 +797,20 @@ document.addEventListener('change',e=>{
     alt[slot]=nv;OVR[slot]=nv;save();if(moved)toast('这天的记录已改成 '+(ALL_EX.find(x=>x[0]===nv)||[,nv])[1]);render();return}
   if(e.target.classList.contains('trin')){const x=DRAFT&&DRAFT[e.target.dataset.id],v=parseFloat(e.target.value);if(x&&v>=0){x[e.target.dataset.f]=/^r/.test(e.target.dataset.f)?Math.round(v*10)/10:v;x.ok=true;DIRTY=true}render();return}
   if(e.target.classList.contains('vsel')){const D=day(VIEW),it=clone(getItems(D,EK));it[+e.target.dataset.i][0]=e.target.value;setItems(D,EK,it);editItems(EK);render();return}
+  if(e.target.classList.contains('sin')&&SN){const v=parseFloat(e.target.value);if(v>=0)SN.items[+e.target.dataset.i][1]=v;snackSheet();return}
   if(e.target.classList.contains('iin')){const D=day(VIEW),it=clone(getItems(D,EK)),v=parseFloat(e.target.value);
     if(!(v>=0))return editItems(EK);it[+e.target.dataset.i][1]=v;setItems(D,EK,it);editItems(EK);render();return}
   if(e.target.id!=='impf')return;const f=e.target.files[0];if(!f)return;
   f.text().then(t=>{try{const o=JSON.parse(t);if(!o.days)throw 0;if(!confirm('覆盖这台设备上的数据？'))return;S=Object.assign(load(),o);save();render();toast('已导入')}catch(_){toast('文件不对')}});
 });
-document.addEventListener('input',e=>{if(e.target.id==='w')e.target.classList.toggle('saved',e.target.value!==''&&parseFloat(e.target.value)===parseFloat(e.target.dataset.saved))});
+document.addEventListener('input',e=>{if(e.target.id==='snn'&&SN)SN.n=e.target.value;if(e.target.id==='w')e.target.classList.toggle('saved',e.target.value!==''&&parseFloat(e.target.value)===parseFloat(e.target.dataset.saved))});
 document.addEventListener('keydown',e=>{if(e.key==='Enter'&&e.target.id==='w'){document.querySelector('[data-a=w]').click()}});
 for(const x of S.sessions)for(const k of Object.keys(x.sets))if(k.startsWith('sx:')&&STRONG_MAP[k.slice(3)]){const nk=STRONG_MAP[k.slice(3)];if(!x.sets[nk])x.sets[nk]=x.sets[k];delete x.sets[k]}
 const SEED_1107=`Date,Workout Name,Duration,Exercise Name,Set Order,Weight,Reps,Distance,Seconds,RPE\n2026-11-07 12:39:17,"Whole Body_1B",49m,"Incline Bench Press (Smith Machine)",W,10.3,10.0,0,0.0,\n2026-11-07 12:39:17,"Whole Body_1B",49m,"Incline Bench Press (Smith Machine)",W,31.3,5.0,0,0.0,\n2026-11-07 12:39:17,"Whole Body_1B",49m,"Incline Bench Press (Smith Machine)",W,41.3,3.0,0,0.0,\n2026-11-07 12:39:17,"Whole Body_1B",49m,"Incline Bench Press (Smith Machine)",1,41.3,7.0,0,0.0,\n2026-11-07 12:39:17,"Whole Body_1B",49m,"Incline Bench Press (Smith Machine)",2,41.3,6.0,0,0.0,\n2026-11-07 12:39:17,"Whole Body_1B",49m,"Incline Bench Press (Smith Machine)",3,41.3,4.0,0,0.0,\n2026-11-07 12:39:17,"Whole Body_1B",49m,"Seated Wide-Grip Row (Cable)",1,24.9,12.0,0,0.0,\n2026-11-07 12:39:17,"Whole Body_1B",49m,"Seated Wide-Grip Row (Cable)",2,27.2,12.0,0,0.0,\n2026-11-07 12:39:17,"Whole Body_1B",49m,"Seated Wide-Grip Row (Cable)",3,29.5,7.0,0,0.0,\n2026-11-07 12:39:17,"Whole Body_1B",49m,"Romanian Deadlift (Dumbbell)",1,36.0,10.0,0,0.0,\n2026-11-07 12:39:17,"Whole Body_1B",49m,"Romanian Deadlift (Dumbbell)",2,45.0,11.0,0,0.0,\n2026-11-07 12:39:17,"Whole Body_1B",49m,"Romanian Deadlift (Dumbbell)",3,45.0,13.0,0,0.0,\n2026-11-07 12:39:17,"Whole Body_1B",49m,"Bicep Curl (Dumbbell)",1,6.8,10.0,0,0.0,\n2026-11-07 12:39:17,"Whole Body_1B",49m,"Bicep Curl (Dumbbell)",2,6.8,7.0,0,0.0,\n2026-11-07 12:39:17,"Whole Body_1B",49m,"Bicep Curl (Dumbbell)",3,6.8,8.0,0,0.0,\n2026-11-07 12:39:17,"Whole Body_1B",49m,"Bicep Curl (Dumbbell)",4,6.8,5.0,0,0.0,\n2026-11-07 12:39:17,"Whole Body_1B",49m,"Bicep Curl (Dumbbell)",D,6.8,7.0,0,0.0,\n2026-11-07 12:39:17,"Whole Body_1B",49m,"Bicep Curl (Dumbbell)",D,4.5,6.0,0,0.0,\n2026-11-07 12:39:17,"Whole Body_1B",49m,"Leg Press",W,91.0,8.0,0,0.0,\n2026-11-07 12:39:17,"Whole Body_1B",49m,"Leg Press",W,114.0,5.0,0,0.0,\n2026-11-07 12:39:17,"Whole Body_1B",49m,"Leg Press",1,125.0,8.0,0,0.0,\n2026-11-07 12:39:17,"Whole Body_1B",49m,"Leg Press",2,120.0,7.0,0,0.0,\n2026-11-07 12:39:17,"Whole Body_1B",49m,"Leg Press",3,114.0,10.0,0,0.0,`;
 if(!S.sessions.some(x=>x.ts==='2026-11-07 12:39:17')){try{importStrong(SEED_1107)}catch(e){}}
+// 11/8 下午加餐：存成常用加餐，并记进 11/8（只跑一次）
+if(!S.seed1108){const rec={n:'Sourdough 蜂蜜花生酱',items:[['sd',75],['honey',7],['pb',30]],snack:1};
+  if(!S.custom.some(c=>c.n===rec.n))S.custom.push(rec);day('2026-11-08').extras.push(snackEntry(rec));S.seed1108=1;save()}
 render();
 if('serviceWorker' in navigator&&location.protocol==='https:')navigator.serviceWorker.register('sw.js').catch(()=>{});
 </script>

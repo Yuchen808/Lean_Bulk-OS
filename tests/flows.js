@@ -90,6 +90,27 @@
     $$('[data-a=ip][data-i="1"]').click();
     ok('早餐换成 3 全蛋', JSON.stringify(day('2026-11-08').bf) === JSON.stringify([['egg', 3], ['oil', 5]]), day('2026-11-08').bf);
     $$('#sheet').innerHTML = '';
+
+    // 10. 11/8 预置的 sourdough 蜂蜜花生酱加餐
+    const sd = day('2026-11-08').extras.find(e => e.n === 'Sourdough 蜂蜜花生酱');
+    ok('11/8 已记 sourdough 加餐', sd && Math.round(sd.p) === 14 && Math.round(sd.k) === 396, sd);
+    ok('它也存成了常用加餐', S.custom.some(c => c.n === 'Sourdough 蜂蜜花生酱' && c.items), S.custom);
+
+    // 11. 自定义加餐：拼食材 → 记进当天 + 存成常用
+    go('today', '2026-11-08');
+    const n0 = day('2026-11-08').extras.length, c0 = S.custom.length;
+    $$('[data-a=snew]').click();
+    const nm = $$('#snn'); nm.value = '测试加餐'; nm.dispatchEvent(new Event('input', { bubbles: true }));
+    $$('[data-a=sadd][data-v=skyr]').click();
+    fire($$('.sin[data-i="0"]'), '200');
+    $$('#sxn').value = '蓝莓'; $$('#sxg').value = '100'; $$('[data-a=sxadd]').click();
+    $$('[data-a=slog]').click();
+    const tx = day('2026-11-08').extras[n0];
+    ok('自定义加餐记进当天', day('2026-11-08').extras.length === n0 + 1 && tx.n === '测试加餐' && Math.abs(tx.p - 22.7) < .2, tx);
+    ok('自定义加餐存成常用', S.custom.length === c0 + 1, S.custom);
+    const ci = [...EXTRAS, ...S.custom].findIndex(e => e.n === '测试加餐');
+    $$('[data-a=addx][data-i="' + ci + '"]').click();
+    ok('常用加餐一键再加', day('2026-11-08').extras.length === n0 + 2, day('2026-11-08').extras.length);
   } catch (e) { out.push('FAIL 异常 ' + e.message); }
   document.body.insertAdjacentHTML('afterbegin', '<pre id="test-result">' + out.join('\n') + '</pre>');
 })();
