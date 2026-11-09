@@ -874,6 +874,14 @@ if(!S.seed1108d){const D=day('2026-11-08');setItems(D,'dinner',[
 // 11/9 加餐：New York 芝麻贝果 + sour cream 30g（只跑一次，同时存成常用）
 if(!S.seed1109s){const rec={n:'Sour cream 芝麻贝果',snack:1,items:[['bagel',1],['cx',30,{n:'Sour cream',p:2.5,c:3.5,f:20,k:200,ca:100,est:1}]]};
   day('2026-11-09').extras.push(snackEntry(rec));if(!S.custom.some(c=>c.n===rec.n))S.custom.push(rec);S.seed1109s=1;save()}
+// 11/9 晚餐：lamb shawarma wrap + 2 个馕 + hummus + 大份沙拉 + 芝士饺子（覆盖并打勾，只跑一次）
+if(!S.seed1109d){const D=day('2026-11-09');setItems(D,'dinner',[
+  ['cx',350,{n:'Lamb shawarma wrap',p:11,c:22,f:10,k:220,fib:1.5,fe:1.2,zn:2,est:1}],
+  ['cx',180,{n:'馕 ×2',p:8,c:50,f:6,k:300,fib:2.5,est:1}],
+  ['cx',60,{n:'Hummus',p:7,c:14,f:18,k:250,fib:6,est:1}],
+  ['cx',250,{n:'大份沙拉（带酱）',p:2,c:5,f:5,k:70,fib:2,vc:15,va:150,est:1}],
+  ['cx',80,{n:'芝士饺子',p:9,c:28,f:12,k:260,fib:1,ca:120,est:1}]]);
+  D.done.dinner=true;S.seed1109d=1;save()}
 render();
 if('serviceWorker' in navigator&&location.protocol==='https:')navigator.serviceWorker.register('sw.js').catch(()=>{});
 </script>
