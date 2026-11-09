@@ -824,6 +824,13 @@ function applyHashAdd(){
   }catch(e){history.replaceState(null,'',location.pathname);setTimeout(()=>toast('链接坏了，没写入'),300)}
 }
 applyHashAdd();
+// 11/8 晚餐（朋友做的）：整顿覆盖并打勾（只跑一次）
+if(!S.seed1108d){const D=day('2026-11-08');setItems(D,'dinner',[
+  ['cx',105,{n:'橄榄油蒜香鳕鱼',p:22,c:1,f:5.7,k:143,fib:0,est:1}],
+  ['cx',455,{n:'番茄虾 gnocchi',p:4.8,c:23,f:2.9,k:133,fib:0,est:1}],
+  ['cx',90,{n:'Padrón 青椒（橄榄油）',p:1.1,c:4.4,f:11,k:128,fib:0,est:1}],
+  ['cx',250,{n:'chorizo pancetta 炖豆子',p:6,c:10,f:8,k:132,fib:0,est:1}]]);
+  D.done.dinner=true;S.seed1108d=1;save()}
 render();
 if('serviceWorker' in navigator&&location.protocol==='https:')navigator.serviceWorker.register('sw.js').catch(()=>{});
 </script>
