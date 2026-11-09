@@ -871,6 +871,9 @@ if(!S.seed1108d){const D=day('2026-11-08');setItems(D,'dinner',[
   ['cx',90,{n:'Padrón 青椒（橄榄油）',p:1.1,c:4.4,f:11,k:128,fib:0,est:1}],
   ['cx',250,{n:'chorizo pancetta 炖豆子',p:6,c:10,f:8,k:132,fib:0,est:1}]]);
   D.done.dinner=true;S.seed1108d=1;save()}
+// 11/9 加餐：New York 芝麻贝果 + sour cream 30g（只跑一次，同时存成常用）
+if(!S.seed1109s){const rec={n:'Sour cream 芝麻贝果',snack:1,items:[['bagel',1],['cx',30,{n:'Sour cream',p:2.5,c:3.5,f:20,k:200,ca:100,est:1}]]};
+  day('2026-11-09').extras.push(snackEntry(rec));if(!S.custom.some(c=>c.n===rec.n))S.custom.push(rec);S.seed1109s=1;save()}
 render();
 if('serviceWorker' in navigator&&location.protocol==='https:')navigator.serviceWorker.register('sw.js').catch(()=>{});
 </script>
