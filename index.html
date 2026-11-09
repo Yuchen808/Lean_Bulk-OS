@@ -161,7 +161,8 @@ const FOOD={
   pb:{n:'花生酱',unit:'g',step:5,def:15,p:25,c:13,f:50,k:600,fib:6},
   honey:{n:'蜂蜜',unit:'g',step:5,def:10,p:.3,c:82,f:0,k:304,fib:0},
   oil:{n:'油',unit:'ml',step:5,def:5,p:0,c:0,f:91,k:820,fib:0},
-  skyr:{n:'Skyr',unit:'g',step:50,def:150,p:11,c:4,f:.2,k:63,fib:0}
+  skyr:{n:'Skyr',unit:'g',step:50,def:150,p:11,c:4,f:.2,k:63,fib:0},
+  bagel:{n:'贝果',unit:'个',per:95,step:.5,def:1,p:10.5,c:52.6,f:1.6,k:274,fib:2.6}
 };
 for(const id in SRC){const x=SRC[id];FOOD[id]={n:x.n,unit:'g',step:10,def:x.A,p:x.p,c:0,f:x.f,k:x.k,fib:0,raw:1}}
 Object.assign(FOOD,{
@@ -229,7 +230,7 @@ const NUT=[
 const ZERO=()=>{const t={p:0,c:0,f:0,k:0};for(const[x]of NUT)t[x]=0;return t};
 const BF_IDS=['egg','ew','oat','milk','sd','ban','pb','oil','skyr'];
 // 自定义加餐能直接选的食材
-const SNACK_IDS=['sd','pb','honey','ban','skyr','oat','milk','egg','rice'];
+const SNACK_IDS=['sd','bagel','pb','honey','ban','skyr','oat','milk','egg','rice'];
 function sumItems(items){const t=ZERO();for(const it of items){const F=food(it);if(!F)continue;const g=it[1]*(F.per||1);for(const x in t)t[x]+=(F[x]||0)*g/100}return t}
 const descItems=items=>items.map(it=>{const F=food(it);return `${F.n} ${fmtAmt(F,it[1])}`}).join(' · ');
 // 自定义加餐 → 记进某天的「额外」：存当时算好的营养 + 配方
@@ -438,8 +439,9 @@ function vToday(){
   }
   if(D.extras.length)h+=`<div class="meal"><div style="width:28px"></div><div class="t"><div class="n">额外</div><div class="d">${D.extras.map((e,i)=>`<span data-a="rmx" data-i="${i}" style="cursor:pointer">${e.n} ×</span>`).join(' · ')}</div></div><div class="p num">${f0(D.extras.reduce((a,e)=>a+e.p,0))}g</div></div>`;
   const ALLX=[...EXTRAS,...S.custom];
-  h+=`<div class="lbl" style="margin-top:12px">加餐</div><div class="chips">${ALLX.map((e,i)=>e.snack?`<button data-a="addx" data-i="${i}">+ ${e.n}</button>`:'').join('')}<button class="ghost" data-a="snew" style="border:1px dashed var(--rule2)">＋ 自定义加餐</button></div>
-  <div class="lbl" style="margin-top:10px">零碎</div><div class="chips">${ALLX.map((e,i)=>e.snack?'':`<button data-a="addx" data-i="${i}">+ ${e.n}</button>`).join('')}</div></div>`;
+  // 一组就够：成份量的排前面，单品跟在后面，顺序之外不再分类
+  const XORD=ALLX.map((e,i)=>({e,i})).sort((a,b)=>(b.e.snack?1:0)-(a.e.snack?1:0));
+  h+=`<div class="lbl" style="margin-top:12px">加餐</div><div class="chips">${XORD.map(({e,i})=>`<button data-a="addx" data-i="${i}">+ ${e.n}</button>`).join('')}<button class="ghost" data-a="snew" style="border:1px dashed var(--rule2)">＋ 自定义加餐</button></div></div>`;
   h+=`<div class="card num"><div class="row between"><div class="lbl">蛋白</div><div class="sub">计划 ${f0(plan.p)}g</div></div>
     <div class="row" style="align-items:baseline;gap:6px;margin-top:2px"><span class="big">${f0(t.p)}</span><span class="sub">/ ${prot} g</span></div>
     <div class="bar"><i style="width:${pp}%"></i><b style="left:${pm}%"></b></div>
