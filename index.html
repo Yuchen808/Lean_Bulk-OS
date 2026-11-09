@@ -811,6 +811,19 @@ if(!S.sessions.some(x=>x.ts==='2026-11-07 12:39:17')){try{importStrong(SEED_1107
 // 11/8 下午加餐：存成常用加餐，并记进 11/8（只跑一次）
 if(!S.seed1108){const rec={n:'Sourdough 蜂蜜花生酱',items:[['sd',75],['honey',7],['pb',30]],snack:1};
   if(!S.custom.some(c=>c.n===rec.n))S.custom.push(rec);day('2026-11-08').extras.push(snackEntry(rec));S.seed1108=1;save()}
+// 链接写入：#add=<base64url JSON {d:'YYYY-MM-DD',k:'dinner',items:[[名称,克数,{p,c,f,k}]]}>，整顿覆盖（重复打开不会加两遍）并标记吃了
+function applyHashAdd(){
+  const m=location.hash.match(/^#add=(.+)$/);if(!m)return;
+  try{const b=m[1].replace(/-/g,'+').replace(/_/g,'/');
+    const o=JSON.parse(decodeURIComponent(escape(atob(b))));
+    if(!/^\d{4}-\d{2}-\d{2}$/.test(o.d)||!NAME[o.k]||!Array.isArray(o.items))throw 0;
+    const D=day(o.d),it=o.items.map(([n,g,v])=>['cx',+g,{n:String(n),p:+v.p||0,c:+v.c||0,f:+v.f||0,k:+v.k||Math.round(v.p*4+v.c*4+v.f*9),fib:+v.fib||0,est:1}]);
+    setItems(D,o.k,it);D.done[o.k]=true;save();VIEW=o.d;
+    history.replaceState(null,'',location.pathname);
+    const t=meal(D,o.k);setTimeout(()=>toast(`${o.d} ${NAME[o.k]} 已写入 ≈ ${f0(t.k)} kcal · 蛋白 ${f0(t.p)}g`),300);
+  }catch(e){history.replaceState(null,'',location.pathname);setTimeout(()=>toast('链接坏了，没写入'),300)}
+}
+applyHashAdd();
 render();
 if('serviceWorker' in navigator&&location.protocol==='https:')navigator.serviceWorker.register('sw.js').catch(()=>{});
 </script>
