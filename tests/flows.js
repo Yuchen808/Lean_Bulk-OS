@@ -108,6 +108,17 @@
     const tx = day('2026-11-08').extras[n0];
     ok('自定义加餐记进当天', day('2026-11-08').extras.length === n0 + 1 && tx.n === '测试加餐' && Math.abs(tx.p - 22.7) < .2, tx);
     ok('自定义加餐存成常用', S.custom.length === c0 + 1, S.custom);
+
+    // 11b. 认不出的食材：当场填每 100g → 加进去，并记住
+    $$('[data-a=snew]').click();
+    $$('#sxn').value = 'Sourcream'; $$('#sxg').value = '30'; $$('[data-a=sxadd]').click();
+    ok('Sour cream 能认出来', SN.items.length === 1 && SN.items[0][2].n === 'Sourcream', SN.items);
+    $$('#sxn').value = '外星果'; $$('#sxg').value = '50'; $$('[data-a=sxadd]').click();
+    ok('认不出时弹出每 100g 输入', !!$$('#sqp') && SN.ask && SN.ask.n === '外星果');
+    $$('#sqp').value = '10'; $$('#sqc').value = '20'; $$('#sqf').value = '0'; $$('[data-a=sqadd]').click();
+    ok('填完就加进去', SN.items.length === 2 && SN.items[1][2].k === 120, SN.items);
+    ok('下次认识它', !!estimate('外星果') && estimate('外星果').p === 10);
+    $$('[data-a=close]').click(); SN = null;
     const ci = [...EXTRAS, ...S.custom].findIndex(e => e.n === '测试加餐');
     $$('[data-a=addx][data-i="' + ci + '"]').click();
     ok('常用加餐一键再加', day('2026-11-08').extras.length === n0 + 2, day('2026-11-08').extras.length);

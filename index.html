@@ -608,6 +608,35 @@ function vSet(){
 let EK='bfast',FORM=null;
 // 自定义估算：按名字里的关键词找近似值（每 100g，按通常吃的状态）；越具体的放越前面
 const EST=[
+  [/酸奶油|sour ?cream|cr[eè]me fra[iî]che|法式酸奶油/i,{p:2.5,c:3.5,f:20,k:200,ca:100}],
+  [/奶油奶酪|cream ?cheese|philadelphia/i,{p:6,c:4,f:30,k:310,ca:100}],
+  [/淡奶油|鲜奶油|whipp|double cream|single cream|heavy cream|^cream$|奶油/i,{p:2,c:3,f:35,k:340}],
+  [/黄油|^(?!.*(peanut|nut|almond|花生)).*butter(?! ?nut)/i,{p:.6,c:.6,f:82,k:740}],
+  [/蛋黄酱|美乃滋|mayo/i,{p:1,c:1,f:75,k:680}],
+  [/鹰嘴豆泥|hummus|houmous/i,{p:7,c:14,f:18,k:250,fib:6}],
+  [/橄榄油|olive oil|^oil$|食用油|cooking oil|植物油|麻油|芝麻油/i,{p:0,c:0,f:100,k:884}],
+  [/番茄酱|ketchup/i,{p:1,c:25,f:.1,k:100}],
+  [/酱油|soy sauce/i,{p:8,c:5,f:0,k:55}],
+  [/果酱|jam|marmalade/i,{p:.4,c:60,f:.1,k:250}],
+  [/蜂蜜|honey/i,{p:.3,c:82,f:0,k:304}],
+  [/糖浆|maple|syrup|^糖$|sugar/i,{p:0,c:85,f:0,k:340}],
+  [/冰淇淋|雪糕|ice ?cream|gelato/i,{p:3.5,c:24,f:11,k:207,ca:120}],
+  [/麦片|cereal|cornflakes|muesli/i,{p:8,c:75,f:3,k:370,fib:6,fe:8}],
+  [/藜麦|quinoa/i,{p:4.4,c:21,f:1.9,k:120,fib:2.8,fe:1.5,mg:64}],
+  [/库斯库斯|couscous/i,{p:3.8,c:23,f:.2,k:112,fib:1.4}],
+  [/玉米饼|tortilla|pitta|pita|naan|馕/i,{p:8,c:50,f:6,k:300,fib:3}],
+  [/鹰嘴豆|chickpea|扁豆|lentil|黑豆|芸豆|kidney bean|baked bean|焗豆|豆子|beans?\b/i,{p:7,c:16,f:1,k:110,fib:6,fe:2,fol:100}],
+  [/毛豆|edamame/i,{p:11,c:9,f:5,k:121,fib:5,fol:300}],
+  [/香肠|腊肠|sausage|chorizo|salami|pepperoni|hot ?dog/i,{p:14,c:3,f:25,k:300,zn:2}],
+  [/鸭|duck/i,{p:19,c:0,f:11,k:200,fe:2.7}],
+  [/玉米|corn|sweetcorn/i,{p:3.3,c:19,f:1.4,k:96,fib:2.4}],
+  [/豆浆|soy ?milk|oat ?milk|燕麦奶|almond milk/i,{p:2.5,c:4,f:1.5,k:40,ca:120}],
+  [/红酒|白酒|葡萄酒|wine/i,{p:0,c:2.6,f:0,k:83}],
+  [/威士忌|伏特加|\bgin\b|vodka|whisk|\brum\b/i,{p:0,c:0,f:0,k:230}],
+  [/薯条|fries|chips and/i,{p:3.4,c:41,f:15,k:312,fib:3.8}],
+  [/能量饮料|red ?bull|monster|lucozade/i,{p:0,c:11,f:0,k:45}],
+  [/椰子|coconut/i,{p:3,c:15,f:33,k:354,fib:9}],
+  [/种子|chia|奇亚|亚麻|flax|南瓜子|葵花子|seed/i,{p:20,c:25,f:42,k:530,fib:20,mg:350,zn:5}],
   [/希腊酸奶|greek/i,{p:9,c:4,f:5,k:97,ca:110}],
   [/酸奶|yogh?urt|skyr/i,{p:5,c:6,f:3,k:70,ca:150}],
   [/花生酱|peanut butter/i,{p:25,c:13,f:50,k:600,fib:6,mg:170}],
@@ -659,7 +688,9 @@ const EST=[
   [/鸡蛋|蛋|egg/i,{p:12.6,c:.7,f:9.5,k:143,b12:.9,vd:2.5}],
   [/蔬菜|veg|菜/i,{p:1.5,c:5,f:.2,k:25,fib:3,vc:15,va:200,fol:40}]
 ];
-function estimate(name){for(const[re,v]of EST)if(re.test(name))return v;return null}
+function estimate(name){const L=S.learned||{},key=name.trim().toLowerCase();if(L[key])return L[key];
+  for(const[re,v]of EST)if(re.test(name))return v;return null}
+function learn(name,v){(S.learned||(S.learned={}))[name.trim().toLowerCase()]={p:v.p,c:v.c,f:v.f,k:v.k,fib:v.fib||0}}
 function customForm(){
   if(!FORM)return `<div class="lbl" style="margin-top:14px">自定义</div><div class="chips"><button data-a="cform" data-v="est">+ 自定义估算</button><button data-a="cform" data-v="full">+ 完全自定义（看包装）</button></div>`;
   const inp=(id,ph,t='number')=>`<input id="${id}" type="${t}" ${t==='number'?'inputmode="decimal"':''} placeholder="${ph}" style="width:100%">`;
@@ -711,6 +742,9 @@ function snackSheet(){
      <button class="ghost" data-a="srm" data-i="${i}" aria-label="删除" style="flex:0 0 auto;padding:6px 4px">×</button></div>`}).join('')||'<div class="sub" style="margin-top:6px">点下面的食材，或者写一样别的。</div>'}
    ${left.length?`<div class="chips">${left.map(id=>`<button data-a="sadd" data-v="${id}">+ ${FOOD[id].n}</button>`).join('')}</div>`:''}
    <div class="grid2" style="margin-top:10px"><input id="sxn" type="text" placeholder="别的，如 黑巧克力"><div class="row" style="gap:6px"><input id="sxg" type="number" inputmode="decimal" placeholder="g" style="flex:1;width:0"><button data-a="sxadd">加</button></div></div>
+   ${SN.ask?`<div class="card" style="margin:10px 0 0;padding:12px"><div class="lbl">没认出「${SN.ask.n.replace(/</g,'&lt;')}」${SN.ask.g}g：照包装填每 100g，下次就认识了</div>
+     <div class="grid2" style="margin-top:8px">${['sqp:蛋白 g','sqc:碳水 g','sqf:脂肪 g','sqk:kcal（空着自动算）'].map(x=>{const[id,ph]=x.split(':');return `<input id="${id}" type="number" inputmode="decimal" placeholder="${ph}" style="width:100%">`}).join('')}</div>
+     <div class="row" style="margin-top:10px"><button class="solid" data-a="sqadd" style="flex:1">加入</button><button class="ghost" data-a="sqno">取消</button></div></div>`:''}
    <div class="sub num" style="margin-top:12px">合计 ≈ 蛋白 ${f0(t.p)}g · ${f0(t.k)} kcal · 碳水 ${f0(t.c)}g · 脂肪 ${f0(t.f)}g</div>
    <label class="row" style="gap:8px;margin-top:12px"><button class="chk ${SN.keep?'on':''}" data-a="skeep"></button>存成常用加餐，下次一键加</label>
    <div class="row" style="margin-top:12px">${SN.idx!=null?`<button class="solid" data-a="ssave" style="flex:1">保存</button><button data-a="slog" style="flex:1">保存并记进今天</button>`:`<button class="solid" data-a="slog" style="flex:1">记进今天</button>`}</div>
@@ -731,9 +765,9 @@ document.addEventListener('click',e=>{
     case'cxadd':{const n=($('#cxn').value||'').trim(),g=parseFloat($('#cxg').value);
       if(!n||!(g>0))return toast('写名称和克数');
       let o;
-      if(FORM==='est'){const v=estimate(n);if(!v)return toast('认不出来，用「完全自定义」');o={n,...v,est:1}}
+      if(FORM==='est'){const v=estimate(n);if(!v){FORM='full';editItems(EK);$('#cxn').value=n;$('#cxg').value=g;$('#cxp').focus();return toast('没认出，照包装填每 100g，下次就认识了')}o={n,...v,est:1}}
       else{const num=id=>parseFloat($('#'+id).value)||0;const pp=num('cxp'),cc=num('cxc'),ff=num('cxf');
-        o={n,p:pp,c:cc,f:ff,k:num('cxk')||Math.round(pp*4+cc*4+ff*9),fib:num('cxfib')}}
+        o={n,p:pp,c:cc,f:ff,k:num('cxk')||Math.round(pp*4+cc*4+ff*9),fib:num('cxfib')};learn(n,o)}
       const it=clone(getItems(D,EK));it.push(['cx',g,o]);setItems(D,EK,it);FORM=null;editItems(EK);render();
       toast(`${n} ${g}g ≈ 蛋白 ${f0(o.p*g/100)}g · ${f0(o.k*g/100)} kcal`);return}
     case'is':{const it=clone(getItems(D,EK)),i=+b.dataset.i;it[i][1]=Math.max(0,+(it[i][1]+ +b.dataset.d).toFixed(2));setItems(D,EK,it);editItems(EK);render();return}
@@ -760,8 +794,12 @@ document.addEventListener('click',e=>{
     case'srm':SN.items.splice(+b.dataset.i,1);snackSheet();return;
     case'skeep':SN.keep=!SN.keep;snackSheet();return;
     case'sxadd':{const n=($('#sxn').value||'').trim(),g=parseFloat($('#sxg').value);
-      if(!n||!(g>0))return toast('写名称和克数');const v=estimate(n);if(!v)return toast('认不出来，换个说法');
+      if(!n||!(g>0))return toast('写名称和克数');const v=estimate(n);if(!v){SN.ask={n,g};snackSheet();$('#sqp').focus();return}
       SN.items.push(['cx',g,{n,...v,est:1}]);snackSheet();return}
+    case'sqadd':{const A=SN.ask,num=id=>parseFloat($('#'+id).value)||0,pp=num('sqp'),cc=num('sqc'),ff=num('sqf');
+      if(!(pp+cc+ff>0))return toast('至少填一项');const v={p:pp,c:cc,f:ff,k:num('sqk')||Math.round(pp*4+cc*4+ff*9),fib:0};
+      learn(A.n,v);SN.items.push(['cx',A.g,{n:A.n,...v}]);SN.ask=null;save();snackSheet();return}
+    case'sqno':SN.ask=null;snackSheet();return;
     case'ssave':case'slog':{if(!SN.items.length)return toast('先加食材');
       const n=SN.n.trim()||descItems(SN.items).slice(0,24);const rec={n,items:clone(SN.items),snack:1};
       if(SN.idx!=null)S.custom[SN.idx]=rec;else if(SN.keep)S.custom.push(rec);
