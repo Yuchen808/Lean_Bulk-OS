@@ -882,6 +882,11 @@ if(!S.seed1109d){const D=day('2026-11-09');setItems(D,'dinner',[
   ['cx',250,{n:'大份沙拉（带酱）',p:2,c:5,f:5,k:70,fib:2,vc:15,va:150,est:1}],
   ['cx',80,{n:'芝士饺子',p:9,c:28,f:12,k:260,fib:1,ca:120,est:1}]]);
   D.done.dinner=true;S.seed1109d=1;save()}
+// 11/10 加班外卖 Casa Crunchy：午 Kensington High St、晚 King Cross（覆盖并打勾，只跑一次）
+if(!S.seed1110){const D=day('2026-11-10');
+  setItems(D,'lunch',[['cx',330,{n:'Casa Crunchy · Kensington High St',p:12,c:30,f:12,k:280,fib:1.5,ca:120,est:1}]]);
+  setItems(D,'dinner',[['cx',310,{n:'Casa Crunchy · King Cross',p:14,c:31,f:17,k:330,fib:1.5,ca:150,est:1}]]);
+  D.done.lunch=true;D.done.dinner=true;S.seed1110=1;save()}
 render();
 if('serviceWorker' in navigator&&location.protocol==='https:')navigator.serviceWorker.register('sw.js').catch(()=>{});
 </script>
