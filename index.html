@@ -887,6 +887,14 @@ if(!S.seed1110){const D=day('2026-11-10');
   setItems(D,'lunch',[['cx',330,{n:'Casa Crunchy · Kensington High St',p:12,c:30,f:12,k:280,fib:1.5,ca:120,est:1}]]);
   setItems(D,'dinner',[['cx',310,{n:'Casa Crunchy · King Cross',p:14,c:31,f:17,k:330,fib:1.5,ca:150,est:1}]]);
   D.done.lunch=true;D.done.dinner=true;S.seed1110=1;save()}
+// 11/11 全天：没吃早餐；午 年糕炒猪肉末、加餐 sourdough 花生酱香蕉、晚 乌冬炒蛋鸡胸猪肉白菜；肌酸 + 维生素（覆盖并打勾，只跑一次）
+if(!S.seed1111){const D=day('2026-11-11');
+  setItems(D,'lunch',[['cx',400,{n:'年糕',p:4,c:48,f:.5,k:215,fib:.5,est:1}],['pm5',180],['oil',10]]);
+  setItems(D,'dinner',[['cx',300,{n:'乌冬面（包装净重）',p:3.5,c:28,f:.6,k:135,fib:1.2,est:1}],['egg',2],['cb',80],['pm5',120],
+    ['cx',150,{n:'白菜',p:1.2,c:3.2,f:.2,k:16,fib:1.2,vc:27,ca:77,veg:1,est:1}],['cx',10,{n:'香油',p:0,c:0,f:100,k:884,est:1}]]);
+  D.done={lunch:true,dinner:true};D.creatine=true;D.vitd=true;
+  D.extras.push(snackEntry({n:'Sourdough 花生酱 + 香蕉',snack:1,items:[['sd',60],['pb',25],['ban',1]]}));
+  S.seed1111=1;save()}
 render();
 if('serviceWorker' in navigator&&location.protocol==='https:')navigator.serviceWorker.register('sw.js').catch(()=>{});
 </script>
