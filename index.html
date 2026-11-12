@@ -909,6 +909,14 @@ if(!S.seed1112){const D=day('2026-11-12');
     ['cx',330,{n:'For Goodness Shakes Protein 35g 草莓',p:10.6,c:5.4,f:.2,k:66,ca:290}],
     ['cx',45,{n:'Flame Grilled Steak 薯片',p:6.9,c:53,f:31,k:524,fib:4}]]);
   D.done.lunch=true;S.seed1112=1;save()}
+// 11/12 晚：乌冬面 300g 炒 2 个蛋 + 熟鸡胸 220g（lean）+ 白菜 150g + 油 10g + 一把洋葱碎（只覆盖晚餐并打勾，只跑一次）
+if(!S.seed1112d){const D=day('2026-11-12');
+  setItems(D,'dinner',[['cx',300,{n:'乌冬面（包装净重）',p:3.5,c:28,f:.6,k:135,fib:1.2,est:1}],['egg',2],
+    ['cx',220,{n:'熟鸡胸肉（lean）',p:31,c:0,f:3.6,k:165,b12:.3,zn:1,est:1}],
+    ['cx',150,{n:'白菜',p:1.2,c:3.2,f:.2,k:16,fib:1.2,vc:27,ca:77,veg:1,est:1}],
+    ['cx',10,{n:'食用油',p:0,c:0,f:100,k:884,est:1}],
+    ['cx',40,{n:'洋葱碎（一把）',p:1.1,c:9.3,f:.1,k:40,fib:1.7,vc:7,veg:1,est:1}]]);
+  D.done.dinner=true;S.seed1112d=1;save()}
 render();
 if('serviceWorker' in navigator&&location.protocol==='https:')navigator.serviceWorker.register('sw.js').catch(()=>{});
 </script>
