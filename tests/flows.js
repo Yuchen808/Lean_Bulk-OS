@@ -122,6 +122,27 @@
     const ci = [...EXTRAS, ...S.custom].findIndex(e => e.n === '测试加餐');
     $$('[data-a=addx][data-i="' + ci + '"]').click();
     ok('常用加餐一键再加', day('2026-11-08').extras.length === n0 + 2, day('2026-11-08').extras.length);
+
+    // 12. 练前可以按天改：默认香蕉 + 全麦吐司，点开换成 sourdough 组合，再加自定义
+    go('today', '2026-11-12');
+    const P = day('2026-11-12'); P.train = true; delete P.pre; delete P.done.pre; render();
+    const preOf = () => slots(P).find(x => x[0] === 'pre')[1];
+    ok('练前默认香蕉 + 全麦吐司', /香蕉/.test(preOf().d) && /全麦吐司/.test(preOf().d) && Math.abs(preOf().k - 202) < 3, preOf());
+    const lb = JSON.stringify(S.lastBf || null), k0 = totals(P).t.k;
+    $$('[data-a=edit][data-k=pre]').click();
+    ok('练前能点开编辑', !!$$('#sheet .sheet') && /练前/.test($$('#sheet').textContent));
+    $$('[data-a=ip][data-i="1"]').click();
+    ok('练前换成 sourdough 组合', P.pre && P.pre.map(x => x[0]).join() === 'sd,ban,pb', P.pre);
+    fire($$('.iin[data-i="2"]'), '25');
+    ok('练前花生酱改成 25g', P.pre[2][1] === 25, P.pre);
+    $$('[data-a=cform][data-v=est]').click();
+    $$('#cxn').value = '蜂蜜'; $$('#cxg').value = '10'; $$('[data-a=cxadd]').click();
+    ok('练前能加自定义食材', P.pre.length === 4 && P.pre[3][2].n === '蜂蜜', P.pre);
+    $$('#sheet [data-a=close]').click();
+    ok('改练前不动早餐的记忆，也不带到别的天', JSON.stringify(S.lastBf || null) === lb && !day('2026-11-13').pre);
+    $$('[data-a=eat][data-k=pre]').click();
+    ok('练前打勾后按新内容计入当天', Math.abs(totals(P).t.k - k0 - preOf().k) < 1 && preOf().k > 400, [totals(P).t.k, k0, preOf().k]);
+    ok('列表显示新的练前', /Sourdough/.test($$('[data-a=edit][data-k=pre]').textContent), $$('[data-a=edit][data-k=pre]').textContent);
   } catch (e) { out.push('FAIL 异常 ' + e.message); }
   document.body.insertAdjacentHTML('afterbegin', '<pre id="test-result">' + out.join('\n') + '</pre>');
 })();

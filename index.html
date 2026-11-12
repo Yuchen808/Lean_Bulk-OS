@@ -135,7 +135,6 @@ const SRC={
 // 220g 熟米饭 + 200g 蔬菜 + 10ml 油
 const BASE={p:8.9,c:72,f:10.1,k:427,fib:6.9};
 const FIXED={
-  pre:{n:'练前',time:'05:40',d:'香蕉 + 全麦吐司',p:4,c:43,f:1,k:200,fib:5.5,vc:10,va:4,fol:41,ca:46,fe:1.3,pot:520,mg:62,zn:.9},
   snack:{n:'Skyr',time:'15:00',d:'150g Skyr',p:16,c:6,f:0.3,k:95,fib:0,fol:15,b12:.75,ca:195,fe:.15,pot:225,mg:18,zn:.75}
 };
 const EXTRAS=[
@@ -162,7 +161,8 @@ const FOOD={
   honey:{n:'蜂蜜',unit:'g',step:5,def:10,p:.3,c:82,f:0,k:304,fib:0},
   oil:{n:'油',unit:'ml',step:5,def:5,p:0,c:0,f:91,k:820,fib:0},
   skyr:{n:'Skyr',unit:'g',step:50,def:150,p:11,c:4,f:.2,k:63,fib:0},
-  bagel:{n:'贝果',unit:'个',per:95,step:.5,def:1,p:10.5,c:52.6,f:1.6,k:274,fib:2.6}
+  bagel:{n:'贝果',unit:'个',per:95,step:.5,def:1,p:10.5,c:52.6,f:1.6,k:274,fib:2.6},
+  wt:{n:'全麦吐司',unit:'片',per:40,step:.5,def:1,p:10,c:45,f:2.5,k:237,fib:7}
 };
 for(const id in SRC){const x=SRC[id];FOOD[id]={n:x.n,unit:'g',step:10,def:x.A,p:x.p,c:0,f:x.f,k:x.k,fib:0,raw:1}}
 Object.assign(FOOD,{
@@ -192,6 +192,7 @@ const MICRO={
   oat:{fol:32,ca:52,fe:4.3,pot:362,mg:138,zn:3.6},
   milk:{va:20,fol:5,b12:.45,ca:120,pot:150,mg:11,zn:.4},
   sd:{fol:30,ca:60,fe:1.5,pot:120,mg:25,zn:.8},
+  wt:{fol:42,ca:100,fe:2.5,pot:250,mg:75,zn:1.75},
   ban:{vc:8.7,va:3,fol:20,ca:5,fe:.26,pot:358,mg:27,zn:.15},
   pb:{fol:87,ca:49,fe:1.9,pot:560,mg:170,zn:2.8},
   skyr:{fol:10,b12:.5,ca:130,fe:.1,pot:150,mg:12,zn:.5},
@@ -241,6 +242,12 @@ const BF_PRESETS=[
   {n:'3 全蛋',items:[['egg',3],['oil',5]]},
   {n:'Sourdough + 香蕉 + 花生酱',items:[['sd',100],['ban',1],['pb',20]]}
 ];
+// 练前：默认香蕉 + 全麦吐司，可以按天改
+const PRE_PRESETS=[
+  {n:'香蕉 + 全麦吐司',items:[['ban',1],['wt',1]]},
+  {n:'Sourdough + 香蕉 + 花生酱',items:[['sd',50],['ban',1],['pb',15]]}
+];
+const PRE_IDS=['ban','wt','sd','pb','honey','bagel','oat','milk','skyr'];
 const WEEK_ROT={1:['cb','pm5'],2:['cb','sal'],3:['pm5','cb'],4:['cb','cb'],5:['pm5','cb'],6:['cb','basa'],0:['cb','pm5']};
 // 训练课表（double progression：最后一组次数到上限 → 下次加重）
 const PLAN={
@@ -300,10 +307,10 @@ function day(s){
 const clone=a=>a.map(x=>x.slice());
 const food=it=>it[2]?Object.assign({unit:'g',step:10},it[2]):FOOD[it[0]];
 const fmtAmt=(F,a)=>{const v=+(+a).toFixed(1);return F.unit==='g'||F.unit==='ml'?`${v}${F.unit}`:`${v} ${F.unit}`};
-const NAME={bfast:'早餐',lunch:'午餐',dinner:'晚餐'},TIME={bfast:'07:30',lunch:'12:30',dinner:'19:00'};
+const NAME={pre:'练前',bfast:'早餐',lunch:'午餐',dinner:'晚餐'},TIME={pre:'05:40',bfast:'07:30',lunch:'12:30',dinner:'19:00'};
 function defMain(D,k){const m=D.meals[k];return [[m.src,m.g!=null?m.g:SRC[m.src][D.tpl]],['rice',220],['veg',200],['oil',10]]}
-function getItems(D,k){if(k==='bfast')return D.bf||S.lastBf||BF_PRESETS[0].items;return D.meals[k].items||defMain(D,k)}
-function setItems(D,k,it){if(k==='bfast'){D.bf=it;S.lastBf=clone(it)}else D.meals[k].items=it;save()}
+function getItems(D,k){if(k==='pre')return D.pre||PRE_PRESETS[0].items;if(k==='bfast')return D.bf||S.lastBf||BF_PRESETS[0].items;return D.meals[k].items||defMain(D,k)}
+function setItems(D,k,it){if(k==='pre')D.pre=it;else if(k==='bfast'){D.bf=it;S.lastBf=clone(it)}else D.meals[k].items=it;save()}
 function meal(D,k){
   const items=getItems(D,k),t=ZERO();
   for(const it of items){const F=food(it),a=it[1];if(!F)continue;const g=a*(F.per||1);for(const x in t)t[x]+=(F[x]||0)*g/100}
@@ -312,7 +319,7 @@ function meal(D,k){
 }
 function slots(D){
   const out=[];
-  if(D.train)out.push(['pre',FIXED.pre]);
+  if(D.train)out.push(['pre',meal(D,'pre')]);
   out.push(['bfast',meal(D,'bfast')]);
   out.push(['lunch',meal(D,'lunch')]);
   if(D.tpl==='A')out.push(['snack',FIXED.snack]);
@@ -432,7 +439,7 @@ function vToday(){
     <div class="row"><button class="ghost" data-a="train" style="font-size:13px">${D.train?'训练日':'休息日'} ⇄</button>
     <div class="seg"><button data-a="tpl" data-v="A" class="${D.tpl==='A'?'on':''}">A 下午加餐</button><button data-a="tpl" data-v="B" class="${D.tpl==='B'?'on':''}">B</button></div></div></div>`;
   for(const[k,m]of slots(D)){
-    const main=k==='lunch'||k==='dinner'||k==='bfast';
+    const main=k!=='snack';
     h+=`<div class="meal"><button class="chk ${D.done[k]?'on':''}" data-a="eat" data-k="${k}" aria-label="${m.n}"></button>
       <div class="t" ${main?`data-a="edit" data-k="${k}" style="cursor:pointer"`:''}><div class="n">${m.n} <span class="sub" style="font-weight:400">${m.time}</span></div><div class="d">${m.d}${main?' ›':''}</div></div>
       <div class="p num">${f0(m.p)}g</div></div>`;
@@ -703,8 +710,9 @@ function customForm(){
 function chips(ids,have,lbl){const l=ids.filter(id=>id==='veg'?VEG_IDS.some(v=>!have.has(v)):!have.has(id));return l.length?`<div class="lbl" style="margin-top:14px">${lbl}</div><div class="chips">${l.map(id=>`<button data-a="iadd" data-v="${id}">+ ${id==='veg'?'蔬菜':FOOD[id].n}</button>`).join('')}</div>`:''}
 function editItems(k){
   EK=k;const D=day(VIEW),items=getItems(D,k),cur=meal(D,k),have=new Set(items.map(x=>x[0]));
-  const top=k==='bfast'
-    ?`<div class="lbl" style="margin-top:12px">常吃的</div><div class="chips">${BF_PRESETS.map((p,i)=>`<button data-a="ip" data-i="${i}">${p.n}</button>`).join('')}</div>`
+  const pre=k==='pre',PS=pre?PRE_PRESETS:BF_PRESETS;
+  const top=pre||k==='bfast'
+    ?`<div class="lbl" style="margin-top:12px">常吃的</div><div class="chips">${PS.map((p,i)=>`<button data-a="ip" data-i="${i}">${p.n}</button>`).join('')}</div>`
     :`<div class="chips" style="margin-top:10px"><button data-a="ireset">恢复 ${D.tpl} 模板</button></div>`;
   $('#sheet').innerHTML=`<div class="sheet" data-a="close"><div>
    <div class="row between"><div class="mid">${NAME[k]}</div><button class="ghost" data-a="close">完成</button></div>
@@ -717,10 +725,10 @@ function editItems(k){
      <button data-a="is" data-i="${i}" data-d="${F.step}" style="padding:8px 10px">+</button></div>
      <span class="sub" style="flex:0 0 20px">${F.unit}</span>
      <button class="ghost" data-a="irm" data-i="${i}" aria-label="删除" style="flex:0 0 auto;padding:6px 4px">×</button></div>`}).join('')||'<div class="sub" style="margin-top:6px">还没选，点下面的食材。</div>'}
-   ${k==='bfast'?chips(BF_IDS,have,'加一样'):chips(MEAT_IDS,have,'加肉 / 鱼（可以混合）')+chips(SIDE_IDS,have,'加别的')}
+   ${pre?chips(PRE_IDS,have,'加一样'):k==='bfast'?chips(BF_IDS,have,'加一样'):chips(MEAT_IDS,have,'加肉 / 鱼（可以混合）')+chips(SIDE_IDS,have,'加别的')}
    ${customForm()}
    <div class="sub num" style="margin-top:12px">这一顿 ≈ 蛋白 ${f0(cur.p)}g · ${f0(cur.k)} kcal · 碳水 ${f0(cur.c)}g · 脂肪 ${f0(cur.f)}g</div>
-   <div class="sub" style="margin-top:4px">${k==='bfast'?'改过的组合会记住，明天默认还是它。':'肉按生重，米饭按熟重。切换 A/B 模板会恢复成模板。'}</div>
+   <div class="sub" style="margin-top:4px">${pre?'只改这一天，别的训练日还是香蕉 + 全麦吐司。':k==='bfast'?'改过的组合会记住，明天默认还是它。':'肉按生重，米饭按熟重。切换 A/B 模板会恢复成模板。'}</div>
   </div></div>`;
 }
 
@@ -759,7 +767,7 @@ document.addEventListener('click',e=>{
   // 点在弹层内容上（不是按钮）时，不要当成点背景关闭
   if(a==='close'&&b.classList.contains('sheet')&&e.target!==b)return;
   switch(a){
-    case'ip':setItems(D,EK,clone(BF_PRESETS[+b.dataset.i].items));editItems(EK);render();return;
+    case'ip':setItems(D,EK,clone((EK==='pre'?PRE_PRESETS:BF_PRESETS)[+b.dataset.i].items));editItems(EK);render();return;
     case'ireset':delete D.meals[EK].items;delete D.meals[EK].g;save();editItems(EK);render();return;
     case'cform':FORM=b.dataset.v||null;editItems(EK);return;
     case'cxadd':{const n=($('#cxn').value||'').trim(),g=parseFloat($('#cxg').value);
