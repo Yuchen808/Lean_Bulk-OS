@@ -903,6 +903,12 @@ if(!S.seed1111){const D=day('2026-11-11');
   D.done={lunch:true,dinner:true};D.creatine=true;D.vitd=true;
   D.extras.push(snackEntry({n:'Sourdough 花生酱 + 香蕉',snack:1,items:[['sd',60],['pb',25],['ban',1]]}));
   S.seed1111=1;save()}
+// 11/12 午 meal deal：鸡肉沙拉三明治 + For Goodness Shakes Protein 35g + 牛排味薯片（照包装标签，只覆盖午餐并打勾，只跑一次）
+if(!S.seed1112){const D=day('2026-11-12');
+  setItems(D,'lunch',[['cx',240,{n:'鸡肉沙拉三明治（malted bread）',p:12.6,c:18.7,f:4,k:166,fib:2.6}],
+    ['cx',330,{n:'For Goodness Shakes Protein 35g 草莓',p:10.6,c:5.4,f:.2,k:66,ca:290}],
+    ['cx',45,{n:'Flame Grilled Steak 薯片',p:6.9,c:53,f:31,k:524,fib:4}]]);
+  D.done.lunch=true;S.seed1112=1;save()}
 render();
 if('serviceWorker' in navigator&&location.protocol==='https:')navigator.serviceWorker.register('sw.js').catch(()=>{});
 </script>
