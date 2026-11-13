@@ -917,6 +917,12 @@ if(!S.seed1112d){const D=day('2026-11-12');
     ['cx',10,{n:'食用油',p:0,c:0,f:100,k:884,est:1}],
     ['cx',40,{n:'洋葱碎（一把）',p:1.1,c:9.3,f:.1,k:40,fib:1.7,vc:7,veg:1,est:1}]]);
   D.done.dinner=true;S.seed1112d=1;save()}
+// 11/13 早餐：蛋白液 250ml + 燕麦 70g + 牛奶 200ml + 奇亚籽 15g + 蜂蜜 10g + 油 5ml（只覆盖早餐并打勾，只跑一次）
+if(!S.seed1113b){const D=day('2026-11-13');
+  setItems(D,'bfast',[['ew',250],['oat',70],['milk',200],
+    ['cx',15,{n:'奇亚籽',p:16.5,c:42,f:30.7,k:486,fib:34,ca:631,mg:335,zn:4.6,est:1}],
+    ['honey',10],['oil',5]]);
+  D.done.bfast=true;S.seed1113b=1;save()}
 render();
 if('serviceWorker' in navigator&&location.protocol==='https:')navigator.serviceWorker.register('sw.js').catch(()=>{});
 </script>
