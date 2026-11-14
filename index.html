@@ -955,6 +955,10 @@ if(!S.seed1114l){const D=day('2026-11-14'),m=D.meals.lunch;
   if(m.items&&m.items.some(x=>x[0]==='cb'))m.items=m.items.map(x=>x[0]==='cb'?['cb_ck',x[1]]:x);
   else if(!m.items)m.items=[['cb_ck',215],['rice',280],['oil',5],['veg',200]];
   S.seed1114l=1;save()}
+// 11/14 加餐：Conference 梨 1 个带皮 ~160g（只跑一次）
+if(!S.seed1114s){const D=day('2026-11-14');
+  D.extras.push(snackEntry({n:'Conference 梨（带皮）',snack:1,items:[['cx',160,{n:'Conference 梨（带皮）',p:.4,c:15.2,f:.1,k:57,fib:3.1,vc:4.3,fol:7,ca:9,fe:.2,pot:116,mg:7,zn:.1,est:1}]]}));
+  S.seed1114s=1;save()}
 render();
 if('serviceWorker' in navigator&&location.protocol==='https:')navigator.serviceWorker.register('sw.js').catch(()=>{});
 </script>
