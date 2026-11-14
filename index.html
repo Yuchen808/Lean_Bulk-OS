@@ -154,7 +154,7 @@ const FOOD={
   egg:{n:'全蛋',unit:'个',per:50,step:1,def:1,p:12.6,c:.7,f:9.5,k:143,fib:0},
   ew:{n:'蛋白液',unit:'ml',step:50,def:150,p:10.9,c:.7,f:.2,k:52,fib:0},
   oat:{n:'燕麦',unit:'g',step:10,def:40,p:13,c:60,f:7,k:379,fib:10},
-  milk:{n:'牛奶',unit:'ml',step:50,def:200,p:3.5,c:4.8,f:1.7,k:47,fib:0},
+  milk:{n:'全脂牛奶',unit:'ml',step:50,def:200,p:3.4,c:4.7,f:3.6,k:64,fib:0},
   sd:{n:'Sourdough',unit:'g',step:25,def:50,p:9,c:50,f:1.5,k:260,fib:3},
   ban:{n:'香蕉',unit:'根',per:120,step:.5,def:1,p:1.1,c:23,f:.3,k:89,fib:2.6},
   pb:{n:'花生酱',unit:'g',step:5,def:15,p:25,c:13,f:50,k:600,fib:6},
@@ -368,7 +368,8 @@ const STRONG_MAP={
   'Bench Press (Smith Machine)':'d3a','Lunge (Dumbbell)':'d3c','Dumbbell Step Up':'d3c',
   'Face Pull (Cable)':'d3d','Cable Crunch':'d3e',
   'Seated Overhead Press (Dumbbell)':'d4a','Lying Leg Curl (Machine)':'d4c',
-  'Hammer Curl (Dumbbell)':'d4d','Triceps Pushdown (Cable - Straight Bar)':'d4e'
+  'Hammer Curl (Dumbbell)':'d4d','Triceps Pushdown (Cable - Straight Bar)':'d4e',
+  'Good Morning (Barbell)':'d4c','Triceps Pushdown (Cable - Rope)':'d4e'
 };
 function csvRows(t){const out=[];let row=[],f='',q=false;
   for(let i=0;i<t.length;i++){const c=t[i];
@@ -923,6 +924,26 @@ if(!S.seed1113b){const D=day('2026-11-13');
     ['cx',15,{n:'奇亚籽',p:16.5,c:42,f:30.7,k:486,fib:34,ca:631,mg:335,zn:4.6,est:1}],
     ['honey',10],['oil',5]]);
   D.done.bfast=true;S.seed1113b=1;save()}
+// 11/13 午：生面条 150g（干重）+ 猪肉末 5% 250g + 蔬菜 100g + 全脂牛奶 200ml + 橄榄油 5ml（只覆盖午餐并打勾，只跑一次）
+if(!S.seed1113l){const D=day('2026-11-13');
+  setItems(D,'lunch',[['cx',150,{n:'生面条（干重）',p:12,c:72,f:1.3,k:350,fib:3,est:1}],['pm5',250],['veg',100],['milk',200],['oil',5]]);
+  D.done.lunch=true;S.seed1113l=1;save()}
+// 11/13 晚：熟米饭 320g + 鸡胸 200g 生 + 香肠 50g + 番茄 100g + 蔬菜 200g + sourdough 30g + 橄榄油 5ml（只覆盖晚餐并打勾，只跑一次）
+if(!S.seed1113d){const D=day('2026-11-13');
+  setItems(D,'dinner',[['rice',320],['cb',200],['cx',50,{n:'香肠',p:14,c:9,f:18,k:250,est:1}],['v_tom',100],['veg',200],['sd',30],['oil',5]]);
+  D.done.dinner=true;S.seed1113d=1;save()}
+// 11/13 D4 训练（Strong Whole Body_2B，正式组平均重量 × 平均次数；当天已有记录就不写，只跑一次）
+if(!S.seed1113t){if(!S.sessions.some(x=>x.date==='2026-11-13')){
+  const st=a=>{const r1=v=>Math.round(v*10)/10;return{w:r1(a.reduce((x,y)=>x+y[0],0)/a.length),r:r1(a.reduce((x,y)=>x+y[1],0)/a.length),n:a.length,all:a}};
+  const L=st([[14,12],[14,10],[14,12]]),R=st([[14,11],[14,11],[14,8]]);
+  S.sessions.push({date:'2026-11-13',day:'D4',src:'seed',sets:{
+    d4a:st([[24,16],[28,7],[28,4],[16,4]]),
+    d4b:{w:L.w,r:L.r,wR:R.w,rR:R.r},
+    d4c:st([[51.3,12],[51.3,12],[51.3,16]]),
+    d4d:st([[16,13],[16,8],[16,8]]),
+    d4e:st([[9.1,12],[9.1,12],[9.1,12]])}});
+  S.sessions.sort((a,b)=>a.date<b.date?-1:a.date>b.date?1:0);day('2026-11-13').train=true}
+  S.seed1113t=1;save()}
 render();
 if('serviceWorker' in navigator&&location.protocol==='https:')navigator.serviceWorker.register('sw.js').catch(()=>{});
 </script>
