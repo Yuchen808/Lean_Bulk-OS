@@ -143,6 +143,14 @@
     $$('[data-a=eat][data-k=pre]').click();
     ok('练前打勾后按新内容计入当天', Math.abs(totals(P).t.k - k0 - preOf().k) < 1 && preOf().k > 400, [totals(P).t.k, k0, preOf().k]);
     ok('列表显示新的练前', /Sourdough/.test($$('[data-a=edit][data-k=pre]').textContent), $$('[data-a=edit][data-k=pre]').textContent);
+    // 熟重：鸡胸切成熟重，克数不变，营养按熟重算
+    ok('鸡胸熟重 ≈ 147 kcal/100g', Math.abs(FOOD.cb_ck.k - 146.7) < 1, FOOD.cb_ck);
+    go('today', '2026-11-20'); const L = day('2026-11-20'); L.meals.lunch.items = [['cb', 200], ['rice', 220]];
+    $$('[data-a=edit][data-k=lunch]').click(); $$('[data-a=rawck][data-i="0"]').click();
+    ok('点生重⇄后变成熟重、克数不变', L.meals.lunch.items[0][0] === 'cb_ck' && L.meals.lunch.items[0][1] === 200, L.meals.lunch.items);
+    $$('[data-a=rawck][data-i="0"]').click();
+    ok('再点切回生重', L.meals.lunch.items[0][0] === 'cb', L.meals.lunch.items);
+    ok('11/14 午餐鸡胸是熟重', (S.days['2026-11-14'].meals.lunch.items || []).some(x => x[0] === 'cb_ck'), S.days['2026-11-14'].meals.lunch.items);
   } catch (e) { out.push('FAIL 异常 ' + e.message); }
   document.body.insertAdjacentHTML('afterbegin', '<pre id="test-result">' + out.join('\n') + '</pre>');
 })();

@@ -222,6 +222,11 @@ const MICRO={
   swp:{vc:20,va:960,fol:6,ca:30,fe:.6,pot:475,mg:27,zn:.3}
 };
 for(const id in MICRO)Object.assign(FOOD[id],MICRO[id]);
+// 熟重版：meal prep 之后只能称熟重。生→熟的出品率（肉约 75%，鱼约 80%），营养按 生重值 ÷ 出品率 换算
+const YIELD={cb:.75,ct:.75,pm5:.75,pm10:.75,pt:.75,sal:.8,basa:.8};
+for(const id in SRC){const R=FOOD[id],y=YIELD[id],C={n:R.n,unit:'g',step:10,def:Math.round(R.def*y/10)*10,cooked:1,rawOf:id};
+  for(const x of ['p','c','f','k','fib','vc','va','fol','b12','vd','ca','fe','pot','mg','zn'])if(R[x]!=null)C[x]=+(R[x]/y).toFixed(2);
+  FOOD[id+'_ck']=C;R.ckOf=id+'_ck'}
 // NHS / 英国 RNI，成年男性每天
 const NUT=[
   ['fib','膳食纤维','g',30],['vc','维生素 C','mg',40],['va','维生素 A','µg',700],['fol','叶酸','µg',200],
@@ -720,7 +725,7 @@ function editItems(k){
    ${top}
    <div class="lbl" style="margin-top:14px">这一顿</div>
    ${items.map((it,i)=>{const id=it[0],a=it[1],F=food(it);return `<div class="row num" style="padding:8px 0;border-top:1px solid var(--rule);gap:6px">
-     <div style="flex:1;min-width:0;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${F.veg?`<select class="vsel" data-i="${i}" style="max-width:100%;padding:7px 6px;font-weight:600">${VEG_IDS.map(v=>`<option value="${v}" ${v===id?'selected':''} ${v!==id&&items.some(x=>x[0]===v)?'disabled':''}>${FOOD[v].n}</option>`).join('')}</select>`:F.n}${it[2]?` <span class="sub" style="font-weight:400">${it[2].est?'估算':'自定义'}</span>`:''}${F.raw?' <span class="sub" style="font-weight:400">生重</span>':F.cooked?' <span class="sub" style="font-weight:400">熟重</span>':''}</div>
+     <div style="flex:1;min-width:0;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${F.veg?`<select class="vsel" data-i="${i}" style="max-width:100%;padding:7px 6px;font-weight:600">${VEG_IDS.map(v=>`<option value="${v}" ${v===id?'selected':''} ${v!==id&&items.some(x=>x[0]===v)?'disabled':''}>${FOOD[v].n}</option>`).join('')}</select>`:F.n}${it[2]?` <span class="sub" style="font-weight:400">${it[2].est?'估算':'自定义'}</span>`:''}${F.ckOf||F.rawOf?` <button class="ghost" data-a="rawck" data-i="${i}" style="padding:2px 8px;font-size:12px;font-weight:400;border:1px solid var(--rule);border-radius:6px">${F.raw?'生重':'熟重'} ⇄</button>`:F.raw?' <span class="sub" style="font-weight:400">生重</span>':F.cooked?' <span class="sub" style="font-weight:400">熟重</span>':''}</div>
      <div class="step" style="flex:0 0 auto"><button data-a="is" data-i="${i}" data-d="${-F.step}" style="padding:8px 10px">−</button>
      <input class="iin num" data-i="${i}" type="number" inputmode="decimal" step="any" value="${+(+a).toFixed(1)}" style="width:50px;border:0;border-radius:0;text-align:center;font-weight:600;padding:8px 0">
      <button data-a="is" data-i="${i}" data-d="${F.step}" style="padding:8px 10px">+</button></div>
@@ -729,7 +734,7 @@ function editItems(k){
    ${pre?chips(PRE_IDS,have,'加一样'):k==='bfast'?chips(BF_IDS,have,'加一样'):chips(MEAT_IDS,have,'加肉 / 鱼（可以混合）')+chips(SIDE_IDS,have,'加别的')}
    ${customForm()}
    <div class="sub num" style="margin-top:12px">这一顿 ≈ 蛋白 ${f0(cur.p)}g · ${f0(cur.k)} kcal · 碳水 ${f0(cur.c)}g · 脂肪 ${f0(cur.f)}g</div>
-   <div class="sub" style="margin-top:4px">${pre?'只改这一天，别的训练日还是香蕉 + 全麦吐司。':k==='bfast'?'改过的组合会记住，明天默认还是它。':'肉按生重，米饭按熟重。切换 A/B 模板会恢复成模板。'}</div>
+   <div class="sub" style="margin-top:4px">${pre?'只改这一天，别的训练日还是香蕉 + 全麦吐司。':k==='bfast'?'改过的组合会记住，明天默认还是它。':'肉默认按生重，meal prep 称熟重就点「生重 ⇄」切成熟重。米饭按熟重。切换 A/B 模板会恢复成模板。'}</div>
   </div></div>`;
 }
 
@@ -780,6 +785,7 @@ document.addEventListener('click',e=>{
       const it=clone(getItems(D,EK));it.push(['cx',g,o]);setItems(D,EK,it);FORM=null;editItems(EK);render();
       toast(`${n} ${g}g ≈ 蛋白 ${f0(o.p*g/100)}g · ${f0(o.k*g/100)} kcal`);return}
     case'is':{const it=clone(getItems(D,EK)),i=+b.dataset.i;it[i][1]=Math.max(0,+(it[i][1]+ +b.dataset.d).toFixed(2));setItems(D,EK,it);editItems(EK);render();return}
+    case'rawck':{const it=clone(getItems(D,EK)),i=+b.dataset.i,F=FOOD[it[i][0]];it[i][0]=F.ckOf||F.rawOf;setItems(D,EK,it);editItems(EK);render();return}
     case'irm':{const it=clone(getItems(D,EK));it.splice(+b.dataset.i,1);setItems(D,EK,it);editItems(EK);render();return}
     case'iadd':{const it=clone(getItems(D,EK));let id=b.dataset.v;if(id==='veg')id=VEG_IDS.find(v=>!it.some(x=>x[0]===v));let amt=FOOD[id].def;
       if(SRC[id]){amt=SRC[id][D.tpl];if(it.some(x=>SRC[x[0]]))amt=Math.round(amt/20)*10}
@@ -944,6 +950,11 @@ if(!S.seed1113t){if(!S.sessions.some(x=>x.date==='2026-11-13')){
     d4e:st([[9.1,12],[9.1,12],[9.1,12]])}});
   S.sessions.sort((a,b)=>a.date<b.date?-1:a.date>b.date?1:0);day('2026-11-13').train=true}
   S.seed1113t=1;save()}
+// 11/14 午：鸡胸 215g 是 meal prep 后称的熟重，改成熟重版（只跑一次）
+if(!S.seed1114l){const D=day('2026-11-14'),m=D.meals.lunch;
+  if(m.items&&m.items.some(x=>x[0]==='cb'))m.items=m.items.map(x=>x[0]==='cb'?['cb_ck',x[1]]:x);
+  else if(!m.items)m.items=[['cb_ck',215],['rice',280],['oil',5],['veg',200]];
+  S.seed1114l=1;save()}
 render();
 if('serviceWorker' in navigator&&location.protocol==='https:')navigator.serviceWorker.register('sw.js').catch(()=>{});
 </script>
