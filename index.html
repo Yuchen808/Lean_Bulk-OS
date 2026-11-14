@@ -963,6 +963,10 @@ if(!S.seed1114s){const D=day('2026-11-14');
 if(!S.seed1114s2){const D=day('2026-11-14');
   D.extras.push(snackEntry({n:'猕猴桃（绿）',snack:1,items:[['cx',75,{n:'猕猴桃（绿）',p:1.1,c:14.7,f:.5,k:61,fib:3,vc:92.7,fol:25,ca:34,fe:.3,pot:312,mg:17,zn:.1,est:1}]]}));
   S.seed1114s2=1;save()}
+// 11/14 晚：西兰花 200g + 熟猪肉香肠 150g + 洋葱番茄 100g + 猪肉末 5% 生 100g + 熟米饭 280g + 油 5g（只覆盖晚餐并打勾，只跑一次）
+if(!S.seed1114d){const D=day('2026-11-14');
+  setItems(D,'dinner',[['v_broc',200],['cx',150,{n:'熟猪肉香肠',p:17,c:3,f:23,k:290,fib:0,est:1}],['cx',100,{n:'洋葱+番茄',p:1,c:5,f:.2,k:25,fib:1.3,est:1}],['pm5',100],['rice',280],['oil',5]]);
+  D.done.dinner=true;S.seed1114d=1;save()}
 render();
 if('serviceWorker' in navigator&&location.protocol==='https:')navigator.serviceWorker.register('sw.js').catch(()=>{});
 </script>
