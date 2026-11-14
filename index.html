@@ -959,6 +959,10 @@ if(!S.seed1114l){const D=day('2026-11-14'),m=D.meals.lunch;
 if(!S.seed1114s){const D=day('2026-11-14');
   D.extras.push(snackEntry({n:'Conference 梨（带皮）',snack:1,items:[['cx',160,{n:'Conference 梨（带皮）',p:.4,c:15.2,f:.1,k:57,fib:3.1,vc:4.3,fol:7,ca:9,fe:.2,pot:116,mg:7,zn:.1,est:1}]]}));
   S.seed1114s=1;save()}
+// 11/14 加餐：绿猕猴桃 1 个 ~75g 果肉（只跑一次）
+if(!S.seed1114s2){const D=day('2026-11-14');
+  D.extras.push(snackEntry({n:'猕猴桃（绿）',snack:1,items:[['cx',75,{n:'猕猴桃（绿）',p:1.1,c:14.7,f:.5,k:61,fib:3,vc:92.7,fol:25,ca:34,fe:.3,pot:312,mg:17,zn:.1,est:1}]]}));
+  S.seed1114s2=1;save()}
 render();
 if('serviceWorker' in navigator&&location.protocol==='https:')navigator.serviceWorker.register('sw.js').catch(()=>{});
 </script>
