@@ -979,6 +979,12 @@ if(!S.seed1115l){const D=day('2026-11-15');
     ['cx',200,{n:'大白菜',p:1.2,c:3.2,f:.2,k:16,fib:1.2,vc:27,ca:50,est:1}],
     ['rice',280]]);
   D.done.lunch=true;S.seed1115l=1;save()}
+// 11/15 晚餐：鸡胸 200g（生）+ 番茄 150g + 鹰嘴豆 65g（罐头沥干）+ 西兰花 165g + 米饭 290g（只覆盖晚餐并打勾，只跑一次）
+if(!S.seed1115d){const D=day('2026-11-15');
+  setItems(D,'dinner',[['cb',200],['v_tom',150],
+    ['cx',65,{n:'鹰嘴豆（罐头沥干）',p:7,c:17,f:2.4,k:120,fib:6,fe:2,est:1}],
+    ['v_broc',165],['rice',290]]);
+  D.done.dinner=true;S.seed1115d=1;save()}
 render();
 if('serviceWorker' in navigator&&location.protocol==='https:')navigator.serviceWorker.register('sw.js').catch(()=>{});
 </script>
