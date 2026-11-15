@@ -972,6 +972,13 @@ if(!S.seed1115b){const D=day('2026-11-15');
   setItems(D,'bfast',[['ew',250],['egg',1],['milk',300],['pb',25],['ban',1],['oat',70],
     ['cx',15,{n:'奇亚籽',p:16.5,c:42,f:30.7,k:486,fib:34,ca:631,mg:335,zn:4.6,est:1}]]);
   D.done.bfast=true;S.seed1115b=1;save()}
+// 11/15 午餐：三文鱼 120g + 橄榄油 10ml + 熟猪肉香肠 1 根 ~50g（5ml 油煎）+ 大白菜 200g + 米饭 280g（只覆盖午餐并打勾，只跑一次）
+if(!S.seed1115l){const D=day('2026-11-15');
+  setItems(D,'lunch',[['sal',120],['oil',15],
+    ['cx',50,{n:'熟猪肉香肠（1 根估 50g）',p:17,c:3,f:23,k:290,fib:0,est:1}],
+    ['cx',200,{n:'大白菜',p:1.2,c:3.2,f:.2,k:16,fib:1.2,vc:27,ca:50,est:1}],
+    ['rice',280]]);
+  D.done.lunch=true;S.seed1115l=1;save()}
 render();
 if('serviceWorker' in navigator&&location.protocol==='https:')navigator.serviceWorker.register('sw.js').catch(()=>{});
 </script>
