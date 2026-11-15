@@ -985,6 +985,17 @@ if(!S.seed1115d){const D=day('2026-11-15');
     ['cx',65,{n:'鹰嘴豆（罐头沥干）',p:7,c:17,f:2.4,k:120,fib:6,fe:2,est:1}],
     ['v_broc',165],['rice',290]]);
   D.done.dinner=true;S.seed1115d=1;save()}
+// 11/15 D1 训练（Strong Whole Body_1A，21:11 起 42 分钟；正式组平均重量 × 平均次数，热身组和递减组不算；当天已有记录就不写，只跑一次）
+if(!S.seed1115t){if(!S.sessions.some(x=>x.date==='2026-11-15')){
+  const st=a=>{const r1=v=>Math.round(v*10)/10;return{w:r1(a.reduce((x,y)=>x+y[0],0)/a.length),r:r1(a.reduce((x,y)=>x+y[1],0)/a.length),n:a.length,all:a}};
+  S.sessions.push({date:'2026-11-15',day:'D1',src:'seed',sets:{
+    d1a:st([[36,10],[36,8],[36,10]]),
+    d1b:st([[48,10],[48,10],[48,10]]),
+    d1c:st([[41.3,10],[41.3,11],[41.3,8]]),
+    d1d:st([[12,16],[16,8]]),
+    d1e:st([[9.1,13],[9.1,6]])}});
+  S.sessions.sort((a,b)=>a.date<b.date?-1:a.date>b.date?1:0);day('2026-11-15').train=true}
+  S.seed1115t=1;save()}
 render();
 if('serviceWorker' in navigator&&location.protocol==='https:')navigator.serviceWorker.register('sw.js').catch(()=>{});
 </script>
