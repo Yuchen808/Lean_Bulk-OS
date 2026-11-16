@@ -1008,6 +1008,14 @@ if(!S.seed1116l){const D=day('2026-11-16');
 if(!S.seed1116s){const D=day('2026-11-16');
   D.extras.push(snackEntry({n:'梨（带皮）',snack:1,items:[['cx',160,{n:'梨（带皮）',p:.4,c:15.2,f:.1,k:57,fib:3.1,vc:4.3,fol:7,ca:9,fe:.2,pot:116,mg:7,zn:.1,est:1}]]}));
   S.seed1116s=1;save()}
+// 11/16 晚餐：三文鱼 120g + 蛋白液 220ml + 全蛋 1 个 + mature cheddar 35g + 米饭 280g + 大白菜 200g + 橄榄油 5g（只覆盖晚餐并打勾，只跑一次）
+if(!S.seed1116d){const D=day('2026-11-16');
+  setItems(D,'dinner',[['sal',120],['ew',220],['egg',1],
+    ['cx',35,{n:'Mature cheddar',p:25,c:.1,f:34,k:410,fib:0,ca:720,zn:3.6,est:1}],
+    ['rice',280],
+    ['cx',200,{n:'大白菜',p:1.2,c:3.2,f:.2,k:16,fib:1.2,vc:27,ca:50,est:1}],
+    ['oil',5]]);
+  D.done.dinner=true;S.seed1116d=1;save()}
 render();
 if('serviceWorker' in navigator&&location.protocol==='https:')navigator.serviceWorker.register('sw.js').catch(()=>{});
 </script>
