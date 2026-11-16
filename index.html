@@ -1002,6 +1002,10 @@ if(!S.seed1116l){const D=day('2026-11-16');
     ['cx',100,{n:'洋葱+番茄',p:1,c:5,f:.2,k:25,fib:1.3,est:1}],
     ['rice',280],['oil',5]]);
   D.done.lunch=true;S.seed1116l=1;save()}
+// 11/16 加餐：梨 1 个带皮 ~160g（只跑一次）
+if(!S.seed1116s){const D=day('2026-11-16');
+  D.extras.push(snackEntry({n:'梨（带皮）',snack:1,items:[['cx',160,{n:'梨（带皮）',p:.4,c:15.2,f:.1,k:57,fib:3.1,vc:4.3,fol:7,ca:9,fe:.2,pot:116,mg:7,zn:.1,est:1}]]}));
+  S.seed1116s=1;save()}
 render();
 if('serviceWorker' in navigator&&location.protocol==='https:')navigator.serviceWorker.register('sw.js').catch(()=>{});
 </script>
