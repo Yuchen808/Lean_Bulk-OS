@@ -1036,6 +1036,10 @@ if(!S.seed1117s){const D=day('2026-11-17');
 if(!S.seed1117s2){const D=day('2026-11-17');
   for(let i=0;i<2;i++)D.extras.push({n:'Sultana scone',p:5.3,c:39.3,f:8.1,k:253,fib:1.1});
   S.seed1117s2=1;save()}
+// 11/17 午餐：熟米饭 280 + 熟巴沙鱼 120 + 熟猪肉末 100 + 大白菜 200 + 橄榄油 10（只跑一次）
+if(!S.seed1117l){const D=day('2026-11-17');
+  setItems(D,'lunch',[['rice',280],['basa_ck',120],['pm5_ck',100],['cx',200,{n:'大白菜',p:1.2,c:2.2,f:.2,k:13,fib:1.2,vc:27,fol:79,ca:77,fe:.3,pot:238,mg:13,zn:.2,est:1}],['oil',10]]);
+  D.done.lunch=true;S.seed1117l=1;save()}
 render();
 if('serviceWorker' in navigator&&location.protocol==='https:')navigator.serviceWorker.register('sw.js').catch(()=>{});
 </script>
