@@ -1027,6 +1027,10 @@ if(!S.seed1117t){if(!S.sessions.some(x=>x.date==='2026-11-17')){
     d2e_lp:st([[125,13],[125,13],[125,13]])}});
   S.sessions.sort((a,b)=>a.date<b.date?-1:a.date>b.date?1:0);day('2026-11-17').train=true}
   S.seed1117t=1;save()}
+// 11/17 加餐：Waitrose sultana scone 1 个（包装标签：每个 253 kcal，约 75g；只跑一次）
+if(!S.seed1117s){const D=day('2026-11-17');
+  D.extras.push(snackEntry({n:'Sultana scone（Waitrose）',snack:1,items:[['cx',75,{n:'Sultana scone（Waitrose）',p:7,c:52.4,f:10.8,k:338,fib:1.5}]]}));
+  S.seed1117s=1;save()}
 render();
 if('serviceWorker' in navigator&&location.protocol==='https:')navigator.serviceWorker.register('sw.js').catch(()=>{});
 </script>
