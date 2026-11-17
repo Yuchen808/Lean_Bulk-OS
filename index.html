@@ -145,7 +145,8 @@ const EXTRAS=[
   {n:'30g 杏仁',p:6.3,c:6.5,f:15,k:175,fib:3.7,fol:15,ca:80,fe:1.1,pot:220,mg:80,zn:.9},
   {n:'贝果',p:10,c:50,f:1.5,k:260,fib:2.5,fol:50,ca:20,fe:3,pot:100,mg:25,zn:.8},
   {n:'150g 米饭',p:4,c:42,f:.4,k:195,fib:.6,fol:4,ca:15,fe:.3,pot:50,mg:18,zn:.75},
-  {n:'全麦吐司',p:4,c:18,f:1,k:95,fib:2.8,fol:17,ca:40,fe:1,pot:100,mg:30,zn:.7},
+  {n:'全麦吐司',p:2.5,c:9.1,f:.6,k:54,fib:1.5,fol:10,ca:24,fe:.6,pot:60,mg:18,zn:.4},
+  {n:'Sultana scone',p:5.3,c:39.3,f:8.1,k:253,fib:1.1},
   {n:'Skyr 碗',p:28,c:55,f:6,k:400,fib:6,vc:15,fol:30,b12:1,ca:300,fe:1.5,pot:450,mg:60,zn:2,snack:1},
   {n:'三文鱼 bagel',p:24,c:50,f:13,k:420,fib:2.5,va:60,fol:50,b12:1.8,vd:4,ca:60,fe:3,pot:250,mg:35,zn:1.2,snack:1,oily:1},
   {n:'鹰嘴豆泥+皮塔',p:13,c:55,f:15,k:400,fib:10,vc:5,fol:90,ca:80,fe:3,pot:350,mg:70,zn:1.8,snack:1},
@@ -1031,6 +1032,10 @@ if(!S.seed1117t){if(!S.sessions.some(x=>x.date==='2026-11-17')){
 if(!S.seed1117s){const D=day('2026-11-17');
   D.extras.push(snackEntry({n:'Sultana scone（Waitrose）',snack:1,items:[['cx',75,{n:'Sultana scone（Waitrose）',p:7,c:52.4,f:10.8,k:338,fib:1.5}]]}));
   S.seed1117s=1;save()}
+// 11/17 加餐：sultana scone 再记 2 个（第 1 个被误删 + 又吃了 1 个；只跑一次）
+if(!S.seed1117s2){const D=day('2026-11-17');
+  for(let i=0;i<2;i++)D.extras.push({n:'Sultana scone',p:5.3,c:39.3,f:8.1,k:253,fib:1.1});
+  S.seed1117s2=1;save()}
 render();
 if('serviceWorker' in navigator&&location.protocol==='https:')navigator.serviceWorker.register('sw.js').catch(()=>{});
 </script>
