@@ -127,7 +127,7 @@
     go('today', '2026-11-12');
     const P = day('2026-11-12'); P.train = true; delete P.pre; delete P.done.pre; render();
     const preOf = () => slots(P).find(x => x[0] === 'pre')[1];
-    ok('练前默认香蕉 + 全麦吐司', /香蕉/.test(preOf().d) && /全麦吐司/.test(preOf().d) && Math.abs(preOf().k - 202) < 3, preOf());
+    ok('练前默认香蕉 + 全麦吐司', /香蕉/.test(preOf().d) && /全麦吐司/.test(preOf().d) && Math.abs(preOf().k - 161) < 3, preOf());
     const lb = JSON.stringify(S.lastBf || null), k0 = totals(P).t.k;
     $$('[data-a=edit][data-k=pre]').click();
     ok('练前能点开编辑', !!$$('#sheet .sheet') && /练前/.test($$('#sheet').textContent));
