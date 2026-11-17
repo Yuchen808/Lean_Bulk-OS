@@ -1040,6 +1040,10 @@ if(!S.seed1117s2){const D=day('2026-11-17');
 if(!S.seed1117l){const D=day('2026-11-17');
   setItems(D,'lunch',[['rice',280],['basa_ck',120],['pm5_ck',100],['cx',200,{n:'大白菜',p:1.2,c:2.2,f:.2,k:13,fib:1.2,vc:27,fol:79,ca:77,fe:.3,pot:238,mg:13,zn:.2,est:1}],['oil',10]]);
   D.done.lunch=true;S.seed1117l=1;save()}
+// 11/17 晚餐：ribeye 225g 生（估）+ 干面 135g + 西兰花 200g + 橄榄油 5ml（只跑一次）
+if(!S.seed1117d){const D=day('2026-11-17');
+  setItems(D,'dinner',[['cx',225,{n:'Ribeye 牛扒（生重）',p:20,c:0,f:20,k:260,b12:2,fe:2,zn:4.5,pot:300,mg:20,est:1}],['cx',135,{n:'干面条',p:12,c:72,f:1.5,k:350,fib:3,fe:1.3,mg:30,zn:1,pot:180,est:1}],['v_broc',200],['oil',5]]);
+  D.done.dinner=true;S.seed1117d=1;save()}
 render();
 if('serviceWorker' in navigator&&location.protocol==='https:')navigator.serviceWorker.register('sw.js').catch(()=>{});
 </script>
