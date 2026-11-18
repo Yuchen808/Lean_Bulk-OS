@@ -1048,6 +1048,10 @@ if(!S.seed1117d){const D=day('2026-11-17');
 if(!S.seed1118l){const D=day('2026-11-18');
   setItems(D,'lunch',[['cx',240,{n:'鸡胸黑胡椒蛋黄酱三明治',p:12.6,c:18.7,f:4,k:166,fib:2.6}],['cx',330,{n:'Goodness 巧克力蛋白奶昔',p:10.6,c:5,f:.3,k:66,ca:290,pot:240,b12:.17}],['cx',45,{n:'牛排味薯片',p:6.9,c:53,f:31,k:524,fib:4}]]);
   D.done.lunch=true;S.seed1118l=1;save()}
+// 11/18 晚餐：熟鸡胸 170g + 干面 100g + 西兰花 140g + 橄榄油 10g（只跑一次）
+if(!S.seed1118d){const D=day('2026-11-18');
+  setItems(D,'dinner',[['cb_ck',170],['cx',100,{n:'干面条',p:12,c:72,f:1.5,k:350,fib:3,fe:1.3,mg:30,zn:1,pot:180,est:1}],['v_broc',140],['oil',11]]);
+  D.done.dinner=true;S.seed1118d=1;save()}
 render();
 if('serviceWorker' in navigator&&location.protocol==='https:')navigator.serviceWorker.register('sw.js').catch(()=>{});
 </script>
