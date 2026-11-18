@@ -1044,6 +1044,10 @@ if(!S.seed1117l){const D=day('2026-11-17');
 if(!S.seed1117d){const D=day('2026-11-17');
   setItems(D,'dinner',[['cx',225,{n:'Ribeye 牛扒（生重）',p:20,c:0,f:20,k:260,b12:2,fe:2,zn:4.5,pot:300,mg:20,est:1}],['cx',135,{n:'干面条',p:12,c:72,f:1.5,k:350,fib:3,fe:1.3,mg:30,zn:1,pot:180,est:1}],['v_broc',200],['oil',5]]);
   D.done.dinner=true;S.seed1117d=1;save()}
+// 11/18 午餐：鸡胸黑胡椒蛋黄酱三明治 1 盒（240g）+ Goodness 巧克力蛋白奶昔 330ml + 牛排味薯片 45g（标签值，只跑一次）
+if(!S.seed1118l){const D=day('2026-11-18');
+  setItems(D,'lunch',[['cx',240,{n:'鸡胸黑胡椒蛋黄酱三明治',p:12.6,c:18.7,f:4,k:166,fib:2.6}],['cx',330,{n:'Goodness 巧克力蛋白奶昔',p:10.6,c:5,f:.3,k:66,ca:290,pot:240,b12:.17}],['cx',45,{n:'牛排味薯片',p:6.9,c:53,f:31,k:524,fib:4}]]);
+  D.done.lunch=true;S.seed1118l=1;save()}
 render();
 if('serviceWorker' in navigator&&location.protocol==='https:')navigator.serviceWorker.register('sw.js').catch(()=>{});
 </script>
