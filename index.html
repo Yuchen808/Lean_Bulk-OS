@@ -296,7 +296,13 @@ let DIAG={persisted:null,usage:null};
 try{navigator.storage&&navigator.storage.persist&&navigator.storage.persist().then(p=>{DIAG.persisted=p});
   navigator.storage&&navigator.storage.estimate&&navigator.storage.estimate().then(e=>{DIAG.usage=e.usage})}catch(e){}
 if(!S.settings.v2){if(S.settings.kcal===2550&&S.settings.prot===140){S.settings.kcal=2500;S.settings.prot=165;S.settings.fat=65}S.settings.v2=1;try{localStorage.setItem(KEY,JSON.stringify(S))}catch(e){}}
-function save(){try{localStorage.setItem(KEY,JSON.stringify(S))}catch(e){toast('本地存储不可用，请导出备份')}}
+// 防覆盖：写之前先看存储里是不是另一份数据（born 不同）。是的话说明这次启动时没读到真数据，不能拿空数据盖掉它，改成重新加载。
+let GUARD_HIT=false;
+function save(){try{
+  const raw=localStorage.getItem(KEY);
+  if(raw){let o=null;try{o=JSON.parse(raw)}catch(e){}
+    if(o&&o.born&&S.born&&o.born!==S.born){if(!GUARD_HIT){GUARD_HIT=true;location.reload()}return}}
+  localStorage.setItem(KEY,JSON.stringify(S))}catch(e){toast('本地存储不可用，请导出备份')}}
 
 /* ---------- 日期 ---------- */
 const pad=n=>String(n).padStart(2,'0');
@@ -867,7 +873,7 @@ document.addEventListener('change',e=>{
   if(e.target.classList.contains('iin')){const D=day(VIEW),it=clone(getItems(D,EK)),v=parseFloat(e.target.value);
     if(!(v>=0))return editItems(EK);it[+e.target.dataset.i][1]=v;setItems(D,EK,it);editItems(EK);render();return}
   if(e.target.id!=='impf')return;const f=e.target.files[0];if(!f)return;
-  f.text().then(t=>{try{const o=JSON.parse(t);if(!o.days)throw 0;if(!confirm('覆盖这台设备上的数据？'))return;S=Object.assign(load(),o);save();render();toast('已导入')}catch(_){toast('文件不对')}});
+  f.text().then(t=>{try{const o=JSON.parse(t);if(!o.days)throw 0;if(!confirm('覆盖这台设备上的数据？'))return;{const cur=load();S=Object.assign(cur,o);S.born=cur.born}save();render();toast('已导入')}catch(_){toast('文件不对')}});
 });
 document.addEventListener('input',e=>{if(e.target.id==='snn'&&SN)SN.n=e.target.value;if(e.target.id==='w')e.target.classList.toggle('saved',e.target.value!==''&&parseFloat(e.target.value)===parseFloat(e.target.dataset.saved))});
 document.addEventListener('keydown',e=>{if(e.key==='Enter'&&e.target.id==='w'){document.querySelector('[data-a=w]').click()}});
