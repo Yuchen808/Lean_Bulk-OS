@@ -1074,6 +1074,31 @@ if(!S.seed1119w){const D=day('2026-11-19');if(!D.w)D.w=70.1;S.seed1119w=1;save()
 // 11/19：补回 11/07–11/18 晨重（估算，Yuchen 同意「大概就行」）。锚点：11/08 饮食方案 68.5、11/12 实称 69.1、「上周涨 0.68」、11/19 实称 70.1。只跑一次，已有的不覆盖
 if(!S.seedW1118){const W={'2026-11-07':68.4,'2026-11-08':68.6,'2026-11-09':68.8,'2026-11-10':68.9,'2026-11-11':69.0,'2026-11-12':69.1,'2026-11-13':69.3,'2026-11-14':69.4,'2026-11-15':69.5,'2026-11-16':69.6,'2026-11-17':69.7,'2026-11-18':69.9};
   for(const d in W){const D=day(d);if(!D.w){D.w=W[d];D.wEst=1}}S.seedW1118=1;save()}
+// 11/19：iOS 更新清掉本地数据后，按 Strong 截图补回 11/01、11/05、11/12 三次训练（只算正式组，热身 W / 递减 D 不算），只跑一次
+if(!S.seedT1112){
+  const st=a=>{const r1=v=>Math.round(v*10)/10;return{w:r1(a.reduce((x,y)=>x+y[0],0)/a.length),r:r1(a.reduce((x,y)=>x+y[1],0)/a.length),n:a.length,all:a}};
+  S.exNames=S.exNames||{};S.exNames['sx:Incline Bench Press (Dumbbell)']='Incline Bench Press (Dumbbell)';S.exNames['sx:Hammer Curl (Cable)']='Hammer Curl (Cable)';
+  const add=(date,dayk,sets,name)=>{if(S.sessions.some(x=>x.date===date))return;S.sessions.push({date,day:dayk,src:'seed',name,sets});day(date).train=true};
+  const L=st([[12,12],[12,12],[12,12]]),R=st([[12,11],[12,8],[12,9]]);
+  add('2026-11-01','D1',{
+    d1c:st([[41.3,8],[41.3,8],[41.3,6]]),
+    d2b:{w:L.w,r:L.r,wR:R.w,rR:R.r},
+    'sx:Incline Bench Press (Dumbbell)':st([[36,8],[32,8],[32,8]]),
+    d1d:st([[12,8],[12,9],[8,12]]),
+    'sx:Hammer Curl (Cable)':st([[6.8,8],[2.3,10],[4.5,10],[2.3,10],[4.5,8],[2.3,10]])},'Full Body Workout A');
+  add('2026-11-05','D1',{
+    d1a:st([[36,8],[36,6],[36,9]]),
+    d1b:st([[48,8],[43,8],[43,6]]),
+    d1c:st([[41.3,6],[41.3,9],[41.3,10]]),
+    d1d:st([[12,13],[12,11]]),
+    d1e:st([[6.8,14],[6.8,6]])},'Full Body_1A');
+  add('2026-11-12','D3',{
+    d3a:st([[41.3,7],[41.3,7],[41.3,8]]),
+    d3b:st([[43,10],[43,10],[43,8]]),
+    d3c:st([[36,10],[36,10],[36,10],[36,10]]),
+    d3d:st([[13.6,20],[15.9,12],[13.6,15]]),
+    d3e:st([[27.2,12]])},'Full Body_2A');
+  S.sessions.sort((a,b)=>a.date<b.date?-1:a.date>b.date?1:0);S.seedT1112=1;save()}
 render();
 if('serviceWorker' in navigator&&location.protocol==='https:')navigator.serviceWorker.register('sw.js').catch(()=>{});
 </script>
