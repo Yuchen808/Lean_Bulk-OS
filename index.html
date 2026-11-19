@@ -1071,6 +1071,9 @@ if(!S.seedRestore1118){for(let d='2026-11-07';d<='2026-11-18';d=addD(d,1)){const
   S.seedRestore1118=1;save()}
 // 11/19 晨重 70.1 kg，只跑一次
 if(!S.seed1119w){const D=day('2026-11-19');if(!D.w)D.w=70.1;S.seed1119w=1;save()}
+// 11/19：补回 11/07–11/18 晨重（估算，Yuchen 同意「大概就行」）。锚点：11/08 饮食方案 68.5、11/12 实称 69.1、「上周涨 0.68」、11/19 实称 70.1。只跑一次，已有的不覆盖
+if(!S.seedW1118){const W={'2026-11-07':68.4,'2026-11-08':68.6,'2026-11-09':68.8,'2026-11-10':68.9,'2026-11-11':69.0,'2026-11-12':69.1,'2026-11-13':69.3,'2026-11-14':69.4,'2026-11-15':69.5,'2026-11-16':69.6,'2026-11-17':69.7,'2026-11-18':69.9};
+  for(const d in W){const D=day(d);if(!D.w){D.w=W[d];D.wEst=1}}S.seedW1118=1;save()}
 render();
 if('serviceWorker' in navigator&&location.protocol==='https:')navigator.serviceWorker.register('sw.js').catch(()=>{});
 </script>
