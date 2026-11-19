@@ -811,6 +811,24 @@ function remember(o,g,d){if(!o||!o.n)return;const L=S.myFoods||(S.myFoods=[]),i=
   if(i>=0)L.splice(i,1);L.unshift({...o,g:+g||100,d:d||TODAY()});if(L.length>60)L.length=60}
 function dayItems(D){const a=[...(D.pre||[]),...(D.bf||[])];for(const k in D.meals||{})a.push(...(D.meals[k].items||[]));for(const e of D.extras||[])a.push(...(e.items||[]));return a}
 if(!S.myFoodsInit){for(const d of Object.keys(S.days||{}).sort())for(const it of dayItems(S.days[d]))if(it[0]==='cx')remember(it[2],it[1],d);S.myFoodsInit=1}
+// 编辑一顿时的候选：内置食材 + 我加过的，按类分组（自定义的按名字归类，前面的规则优先）
+const GROUPS=[
+  ['外食 / 成品',[],/三明治|sandwich|wrap|shawarma|·|crunchy|套餐|burger|汉堡|pizza|披萨|外卖|便当/i],
+  ['零食',[],/薯片|chips|crisps|巧克力|chocolate|饼干|biscuit|cookie|蛋糕|cake|糖果|零食|坚果|\bnuts?\b|奇亚籽|chia|能量棒|\bbar\b/i],
+  ['肉 / 鱼 / 蛋',['cb','ct','pm5','pm10','pt','sal','basa','egg','ew'],/鸡|鸭|猪|牛|羊|肉|肠|鱼|虾|蟹|贝|蛋|豆腐|chicken|beef|pork|lamb|steak|fish|salmon|cod|tuna|prawn|shrimp|egg|tofu|sausage|chorizo|bacon|ham/i],
+  ['主食 / 碳水',['rice','tato','swp','oat','sd','bagel','wt'],/饭|面|粉|米|年糕|饺|馄饨|馒头|饼|馕|包|吐司|bread|toast|pasta|noodle|udon|ramen|gnocchi|potato|土豆|红薯|燕麦|oat|cereal|麦片|bagel|贝果/i],
+  ['奶 / 饮品',['milk','skyr'],/奶|酸奶|芝士|cheese|yogh?urt|skyr|shake|latte|咖啡|coffee|饮|juice|可乐|coke|啤酒|beer/i],
+  ['水果',['ban'],/果|蕉|梨|苹果|橙|橘|莓|葡萄|芒|桃|瓜果|fruit|apple|pear|berry|orange|mango|grape|kiwi/i],
+  ['蔬菜',['veg'],/菜|椒|瓜|菇|茄|豆角|葱|蒜苗|芦笋|沙拉|salad|veg|蔬|西兰花|broccoli|spinach|pepper|tomato|mushroom|onion/i],
+  ['调味 / 油脂',['oil','pb','honey'],/油|酱|sauce|蜂蜜|honey|butter|黄油|cream|mayo|盐|醋|糖浆|syrup|hummus|调料/i],
+  ['其他',[],/$^/]];
+function groupOf(name){for(let i=0;i<GROUPS.length-1;i++)if(GROUPS[i][2].test(name))return i;return GROUPS.length-1}
+function groupChips(items){
+  const have=new Set(items.map(x=>x[0])),haveN=new Set(items.filter(x=>x[0]==='cx').map(x=>mkey(x[2]&&x[2].n)));
+  const G=GROUPS.map(g=>g[1].filter(id=>id==='veg'?VEG_IDS.some(v=>!have.has(v)):!have.has(id))
+    .map(id=>`<button data-a="iadd" data-v="${id}">+ ${id==='veg'?'蔬菜':FOOD[id].n}</button>`));
+  (S.myFoods||[]).forEach((m,i)=>{if(!haveN.has(mkey(m.n)))G[groupOf(m.n)].push(`<button data-a="myadd" data-i="${i}" style="border-style:dashed">+ ${escH(m.n)}</button>`)});
+  return G.map((b,i)=>b.length?`<div class="lbl" style="margin-top:14px">${GROUPS[i][0]}</div><div class="chips">${b.join('')}</div>`:'').join('')}
 function myChips(items){const have=new Set(items.filter(x=>x[0]==='cx').map(x=>mkey(x[2]&&x[2].n)));
   const l=(S.myFoods||[]).map((m,i)=>({m,i})).filter(({m})=>!have.has(mkey(m.n))).slice(0,16);
   return l.length?`<div class="lbl" style="margin-top:14px">我加过的</div><div class="chips">${l.map(({m,i})=>`<button data-a="myadd" data-i="${i}">+ ${escH(m.n)}</button>`).join('')}</div>`:''}
@@ -841,8 +859,7 @@ function editItems(k){
      <button data-a="is" data-i="${i}" data-d="${F.step}" style="padding:8px 10px">+</button></div>
      <span class="sub" style="flex:0 0 20px">${F.unit}</span>
      <button class="ghost" data-a="irm" data-i="${i}" aria-label="删除" style="flex:0 0 auto;padding:6px 4px">×</button></div>`}).join('')||'<div class="sub" style="margin-top:6px">还没选，点下面的食材。</div>'}
-   ${pre?chips(PRE_IDS,have,'加一样'):k==='bfast'?chips(BF_IDS,have,'加一样'):chips(MEAT_IDS,have,'加肉 / 鱼（可以混合）')+chips(SIDE_IDS,have,'加别的')}
-   ${myChips(items)}
+   ${groupChips(items)}
    ${customForm()}
    <div class="sub num" style="margin-top:12px">这一顿 ≈ 蛋白 ${f0(cur.p)}g · ${f0(cur.k)} kcal · 碳水 ${f0(cur.c)}g · 脂肪 ${f0(cur.f)}g</div>
    <div class="sub" style="margin-top:4px">${pre?'只改这一天，别的训练日还是香蕉 + 全麦吐司。':k==='bfast'?'改过的组合会记住，明天默认还是它。':'肉默认按生重，meal prep 称熟重就点「生重 ⇄」切成熟重。米饭按熟重。切换 A/B 模板会恢复成模板。'}</div>

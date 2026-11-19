@@ -153,6 +153,9 @@
     go('today', '2026-11-22'); $$('[data-a=edit][data-k=lunch]').click();
     const myb = [...document.querySelectorAll('[data-a=myadd]')].find(b => /韩国面/.test(b.textContent));
     ok('别的天午饭能看到候选', !!myb);
+    const lbls = [...document.querySelectorAll('#sheet .lbl')].map(x => x.textContent);
+    ok('候选按类分组，不再有「加肉 / 鱼」「加别的」', lbls.includes('肉 / 鱼 / 蛋') && lbls.includes('主食 / 碳水') && !lbls.some(t => /加肉|加别的|我加过的/.test(t)), lbls);
+    ok('韩国面归在主食 / 碳水', myb && myb.parentElement.previousElementSibling.textContent === '主食 / 碳水');
     myb && myb.click();
     const li = day('2026-11-22').meals.lunch.items, last = li[li.length - 1];
     ok('点候选按上次克数加进来', last[0] === 'cx' && last[2].n === '韩国面（测试）' && last[1] === 110 && last[2].c === 70, last);
