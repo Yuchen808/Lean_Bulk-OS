@@ -69,15 +69,16 @@
     ok('目标 2500 / 碳水 ~314 / 脂肪 65', S.settings.kcal===2500&&subs.some(x=>/\/ 31\d g/.test(x))&&subs.some(x=>/\/ 65 g/.test(x)), subs);
 
     // 8c. 喝水 / 肌酸 / 维生素 D / 加餐 / 红薯
-    go('today', '2026-11-08');
+    go('today', '2026-11-05');
     $$('[data-a=water][data-v="500"]').click(); $$('[data-a=water][data-v="750"]').click();
-    ok('喝水累计 1.25L', day('2026-11-08').water === 1250, day('2026-11-08').water);
+    ok('喝水累计 1.25L', day('2026-11-05').water === 1250, day('2026-11-05').water);
     $$('[data-a=water][data-v="1000"]').click();
-    ok('+1 瓶 = 1L', day('2026-11-08').water === 2250, day('2026-11-08').water);
+    ok('+1 瓶 = 1L', day('2026-11-05').water === 2250, day('2026-11-05').water);
     $$('[data-a=tick][data-v=creatine]').click();
-    ok('肌酸打卡', day('2026-11-08').creatine === true, null);
-    const vd0 = totals(day('2026-11-08')).t.vd; $$('[data-a=tick][data-v=vitd]').click();
-    ok('维生素 D 补剂算进微量营养', Math.abs(totals(day('2026-11-08')).t.vd - vd0 - 10) < 1e-6, [vd0, totals(day('2026-11-08')).t.vd]);
+    ok('肌酸打卡', day('2026-11-05').creatine === true, null);
+    const vd0 = totals(day('2026-11-05')).t.vd; $$('[data-a=tick][data-v=vitd]').click();
+    ok('维生素 D 补剂算进微量营养', Math.abs(totals(day('2026-11-05')).t.vd - vd0 - 10) < 1e-6, [vd0, totals(day('2026-11-05')).t.vd]);
+    go('today', '2026-11-08');
     const ob = oilyWeek('2026-11-08'); const ix = [...EXTRAS, ...S.custom].findIndex(e => e.n === '三文鱼 bagel');
     $$('[data-a=addx][data-i="' + ix + '"]').click();
     ok('三文鱼 bagel 算一份油性鱼', oilyWeek('2026-11-08') === ob + 1, [ob, oilyWeek('2026-11-08')]);
