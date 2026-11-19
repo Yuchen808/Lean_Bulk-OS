@@ -696,6 +696,7 @@ function vSet(){
     <div class="grid2" style="margin-top:8px"><input id="cp" type="number" placeholder="蛋白 g"><input id="ck" type="number" placeholder="kcal"><input id="cc" type="number" placeholder="碳水 g"><input id="cf" type="number" placeholder="脂肪 g"></div>
     <button data-a="addc" style="margin-top:8px;width:100%">添加</button>
     ${S.custom.length?`<div class="list" style="margin-top:8px">${S.custom.map((c,i)=>{const t=c.items?sumItems(c.items):c;return `<div class="r"><span>${c.n}${c.items?' <span class="pill">加餐</span>':''}</span><span class="sub">${f0(t.p)}g · ${f0(t.k)}kcal ${c.items?`<span data-a="sedit" data-i="${i}" style="cursor:pointer">改</span> `:''}<span data-a="rmc" data-i="${i}" style="cursor:pointer">删除</span></span></div>`}).join('')}</div>`:''}</div>
+  ${(S.myFoods||[]).length?`<div class="card"><div class="lbl">我加过的食物（编辑每一顿时一点就加）</div><div class="list" style="margin-top:8px">${S.myFoods.map((m,i)=>`<div class="r"><span>${escH(m.n)}</span><span class="sub">${m.g}g · 每 100g 碳水 ${f0(m.c)} · 蛋白 ${f0(m.p)} <span data-a="myrm" data-i="${i}" style="cursor:pointer">×</span></span></div>`).join('')}</div></div>`:''}
   <div class="card"><div class="lbl">从 Strong 导入训练</div>
     <div class="sub" style="margin-top:4px">Strong → Profile → 齿轮 → Export Data → CSV，存到「文件」后在这里选。热身组和递减组会跳过，每个动作取所有正式组的平均重量和平均次数。同一次训练重复导入会覆盖，不会重复。</div>
     <button data-a="simp" style="margin-top:10px;width:100%">选择 Strong CSV</button>
@@ -803,6 +804,16 @@ const EST=[
 function estimate(name){const L=S.learned||{},key=name.trim().toLowerCase();if(L[key])return L[key];
   for(const[re,v]of EST)if(re.test(name))return v;return null}
 function learn(name,v){(S.learned||(S.learned={}))[name.trim().toLowerCase()]={p:v.p,c:v.c,f:v.f,k:v.k,fib:v.fib||0}}
+// 我加过的自定义食物：每次自定义 / 估算加一样，就记成候选（同名覆盖，最近用的排前面），下次一点就加
+const mkey=n=>String(n||'').trim().toLowerCase();
+const escH=t=>String(t).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/"/g,'&quot;');
+function remember(o,g,d){if(!o||!o.n)return;const L=S.myFoods||(S.myFoods=[]),i=L.findIndex(x=>mkey(x.n)===mkey(o.n));
+  if(i>=0)L.splice(i,1);L.unshift({...o,g:+g||100,d:d||TODAY()});if(L.length>60)L.length=60}
+function dayItems(D){const a=[...(D.pre||[]),...(D.bf||[])];for(const k in D.meals||{})a.push(...(D.meals[k].items||[]));for(const e of D.extras||[])a.push(...(e.items||[]));return a}
+if(!S.myFoodsInit){for(const d of Object.keys(S.days||{}).sort())for(const it of dayItems(S.days[d]))if(it[0]==='cx')remember(it[2],it[1],d);S.myFoodsInit=1}
+function myChips(items){const have=new Set(items.filter(x=>x[0]==='cx').map(x=>mkey(x[2]&&x[2].n)));
+  const l=(S.myFoods||[]).map((m,i)=>({m,i})).filter(({m})=>!have.has(mkey(m.n))).slice(0,16);
+  return l.length?`<div class="lbl" style="margin-top:14px">我加过的</div><div class="chips">${l.map(({m,i})=>`<button data-a="myadd" data-i="${i}">+ ${escH(m.n)}</button>`).join('')}</div>`:''}
 function customForm(){
   if(!FORM)return `<div class="lbl" style="margin-top:14px">自定义</div><div class="chips"><button data-a="cform" data-v="est">+ 自定义估算</button><button data-a="cform" data-v="full">+ 完全自定义（看包装）</button></div>`;
   const inp=(id,ph,t='number')=>`<input id="${id}" type="${t}" ${t==='number'?'inputmode="decimal"':''} placeholder="${ph}" style="width:100%">`;
@@ -831,6 +842,7 @@ function editItems(k){
      <span class="sub" style="flex:0 0 20px">${F.unit}</span>
      <button class="ghost" data-a="irm" data-i="${i}" aria-label="删除" style="flex:0 0 auto;padding:6px 4px">×</button></div>`}).join('')||'<div class="sub" style="margin-top:6px">还没选，点下面的食材。</div>'}
    ${pre?chips(PRE_IDS,have,'加一样'):k==='bfast'?chips(BF_IDS,have,'加一样'):chips(MEAT_IDS,have,'加肉 / 鱼（可以混合）')+chips(SIDE_IDS,have,'加别的')}
+   ${myChips(items)}
    ${customForm()}
    <div class="sub num" style="margin-top:12px">这一顿 ≈ 蛋白 ${f0(cur.p)}g · ${f0(cur.k)} kcal · 碳水 ${f0(cur.c)}g · 脂肪 ${f0(cur.f)}g</div>
    <div class="sub" style="margin-top:4px">${pre?'只改这一天，别的训练日还是香蕉 + 全麦吐司。':k==='bfast'?'改过的组合会记住，明天默认还是它。':'肉默认按生重，meal prep 称熟重就点「生重 ⇄」切成熟重。米饭按熟重。切换 A/B 模板会恢复成模板。'}</div>
@@ -881,8 +893,12 @@ document.addEventListener('click',e=>{
       if(FORM==='est'){const v=estimate(n);if(!v){FORM='full';editItems(EK);$('#cxn').value=n;$('#cxg').value=g;$('#cxp').focus();return toast('没认出，照包装填每 100g，下次就认识了')}o={n,...v,est:1}}
       else{const num=id=>parseFloat($('#'+id).value)||0;const pp=num('cxp'),cc=num('cxc'),ff=num('cxf');
         o={n,p:pp,c:cc,f:ff,k:num('cxk')||Math.round(pp*4+cc*4+ff*9),fib:num('cxfib')};learn(n,o)}
-      const it=clone(getItems(D,EK));it.push(['cx',g,o]);setItems(D,EK,it);FORM=null;editItems(EK);render();
+      remember(o,g,VIEW);const it=clone(getItems(D,EK));it.push(['cx',g,o]);setItems(D,EK,it);FORM=null;editItems(EK);render();
       toast(`${n} ${g}g ≈ 蛋白 ${f0(o.p*g/100)}g · ${f0(o.k*g/100)} kcal`);return}
+    case'myadd':{const m=S.myFoods[+b.dataset.i];if(!m)return;const {g,d,...o}=m;remember(o,g,VIEW);
+      const it=clone(getItems(D,EK));it.push(['cx',g,o]);setItems(D,EK,it);editItems(EK);render();
+      toast(`${o.n} ${g}g ≈ 碳水 ${f0(o.c*g/100)}g · ${f0(o.k*g/100)} kcal`);return}
+    case'myrm':S.myFoods.splice(+b.dataset.i,1);save();break;
     case'is':{const it=clone(getItems(D,EK)),i=+b.dataset.i;it[i][1]=Math.max(0,+(it[i][1]+ +b.dataset.d).toFixed(2));setItems(D,EK,it);editItems(EK);render();return}
     case'rawck':{const it=clone(getItems(D,EK)),i=+b.dataset.i,F=FOOD[it[i][0]];it[i][0]=F.ckOf||F.rawOf;setItems(D,EK,it);editItems(EK);render();return}
     case'irm':{const it=clone(getItems(D,EK));it.splice(+b.dataset.i,1);setItems(D,EK,it);editItems(EK);render();return}
@@ -909,10 +925,10 @@ document.addEventListener('click',e=>{
     case'skeep':SN.keep=!SN.keep;snackSheet();return;
     case'sxadd':{const n=($('#sxn').value||'').trim(),g=parseFloat($('#sxg').value);
       if(!n||!(g>0))return toast('写名称和克数');const v=estimate(n);if(!v){SN.ask={n,g};snackSheet();$('#sqp').focus();return}
-      SN.items.push(['cx',g,{n,...v,est:1}]);snackSheet();return}
+      SN.items.push(['cx',g,{n,...v,est:1}]);remember({n,...v,est:1},g,VIEW);snackSheet();return}
     case'sqadd':{const A=SN.ask,num=id=>parseFloat($('#'+id).value)||0,pp=num('sqp'),cc=num('sqc'),ff=num('sqf');
       if(!(pp+cc+ff>0))return toast('至少填一项');const v={p:pp,c:cc,f:ff,k:num('sqk')||Math.round(pp*4+cc*4+ff*9),fib:0};
-      learn(A.n,v);SN.items.push(['cx',A.g,{n:A.n,...v}]);SN.ask=null;save();snackSheet();return}
+      learn(A.n,v);SN.items.push(['cx',A.g,{n:A.n,...v}]);remember({n:A.n,...v},A.g,VIEW);SN.ask=null;save();snackSheet();return}
     case'sqno':SN.ask=null;snackSheet();return;
     case'ssave':case'slog':{if(!SN.items.length)return toast('先加食材');
       const n=SN.n.trim()||descItems(SN.items).slice(0,24);const rec={n,items:clone(SN.items),snack:1};

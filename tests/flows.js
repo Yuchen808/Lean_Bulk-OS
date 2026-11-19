@@ -144,6 +144,20 @@
     $$('[data-a=eat][data-k=pre]').click();
     ok('练前打勾后按新内容计入当天', Math.abs(totals(P).t.k - k0 - preOf().k) < 1 && preOf().k > 400, [totals(P).t.k, k0, preOf().k]);
     ok('列表显示新的练前', /Sourdough/.test($$('[data-a=edit][data-k=pre]').textContent), $$('[data-a=edit][data-k=pre]').textContent);
+    // 自定义食物记成候选，别的天别的餐一点就加
+    go('today', '2026-11-21'); $$('[data-a=edit][data-k=dinner]').click();
+    $$('[data-a=cform][data-v=full]').click();
+    $$('#cxn').value = '韩国面（测试）'; $$('#cxg').value = '110'; $$('#cxp').value = '9'; $$('#cxc').value = '70'; $$('#cxf').value = '2';
+    $$('[data-a=cxadd]').click(); $$('#sheet [data-a=close]').click();
+    ok('自定义食物进了候选', S.myFoods[0].n === '韩国面（测试）' && S.myFoods[0].g === 110, S.myFoods[0]);
+    go('today', '2026-11-22'); $$('[data-a=edit][data-k=lunch]').click();
+    const myb = [...document.querySelectorAll('[data-a=myadd]')].find(b => /韩国面/.test(b.textContent));
+    ok('别的天午饭能看到候选', !!myb);
+    myb && myb.click();
+    const li = day('2026-11-22').meals.lunch.items, last = li[li.length - 1];
+    ok('点候选按上次克数加进来', last[0] === 'cx' && last[2].n === '韩国面（测试）' && last[1] === 110 && last[2].c === 70, last);
+    ok('已经在这一顿的不再显示', ![...document.querySelectorAll('[data-a=myadd]')].some(b => /韩国面/.test(b.textContent)));
+    $$('#sheet [data-a=close]').click();
     // 熟重：鸡胸切成熟重，克数不变，营养按熟重算
     ok('鸡胸熟重 ≈ 147 kcal/100g', Math.abs(FOOD.cb_ck.k - 146.7) < 1, FOOD.cb_ck);
     go('today', '2026-11-20'); const L = day('2026-11-20'); L.meals.lunch.items = [['cb', 200], ['rice', 220]];
