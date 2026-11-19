@@ -1,6 +1,6 @@
 // 回归测试：在 headless Chrome 里跑 index.html 的真实交互流程。
 // 用法：python tests/run.py（把这段注入页面，结果写进 #test-result）
-(function () {
+(async function () {
   const out = [];
   const ok = (name, cond, info) => out.push((cond ? 'PASS ' : 'FAIL ') + name + (cond ? '' : '  ← ' + JSON.stringify(info)));
   const $$ = s => document.querySelector(s);
@@ -153,5 +153,67 @@
     ok('再点切回生重', L.meals.lunch.items[0][0] === 'cb', L.meals.lunch.items);
     ok('11/14 午餐鸡胸是熟重', (S.days['2026-11-14'].meals.lunch.items || []).some(x => x[0] === 'cb_ck'), S.days['2026-11-14'].meals.lunch.items);
   } catch (e) { out.push('FAIL 异常 ' + e.message); }
+
+  // 13. 云端同步（mock fetch，不连网）
+  const realFetch = window.fetch, calls = [];
+  let remote = null, sha = 'sha0', status = 0;
+  window.fetch = async (url, o = {}) => {
+    calls.push({ url, method: o.method || 'GET', body: o.body, auth: o.headers && o.headers.Authorization });
+    if (status) return new Response('{}', { status });
+    if ((o.method || 'GET') === 'GET') {
+      if (!remote) return new Response('{"message":"Not Found"}', { status: 404 });
+      return new Response(JSON.stringify({ sha, size: 1, content: b64e(JSON.stringify(remote)) }), { status: 200 });
+    }
+    const b = JSON.parse(o.body); remote = JSON.parse(b64d(b.content)); sha = 'sha' + calls.length;
+    return new Response(JSON.stringify({ content: { sha } }), { status: 200 });
+  };
+  try {
+    localStorage.removeItem(TOKEN_KEY); BOOT = false; calls.length = 0;
+    save();
+    ok('没 token：save 不排同步', !SYNC.timer, SYNC.timer);
+    await syncNow();
+    ok('没 token：不发请求', calls.length === 0, calls);
+
+    localStorage.setItem(TOKEN_KEY, 'test_tok');
+    day('2026-11-21').water = 500; save();
+    ok('有 token：save 后排了 5 秒同步，并打 updatedAt', !!SYNC.timer && !!S.updatedAt, [SYNC.timer, S.updatedAt]);
+    clearTimeout(SYNC.timer); SYNC.timer = null;
+    remote = {}; await syncNow();
+    const put = calls.find(c => c.method === 'PUT');
+    ok('同步：先 GET 再 PUT，带 sha 和 token', calls[0].method === 'GET' && put && JSON.parse(put.body).sha === 'sha0' && put.auth === 'Bearer test_tok', calls.map(c => c.method));
+    ok('云端收到完整数据（中文不乱码）', remote.days['2026-11-21'].water === 500 && remote.updatedAt === S.updatedAt && remote.custom.some(c => c.n === 'Sourdough 蜂蜜花生酱'), remote && remote.updatedAt);
+    ok('同步成功显示时间', !!SYNC.st.at && !SYNC.st.err, SYNC.st);
+
+    // 新生设备（被清过）：从云端恢复，保留本机 born，本机多的那天也留下
+    const cloud = JSON.parse(JSON.stringify(remote)); cloud.born = 'OTHER'; cloud.updatedAt = '2020-01-01T00:00:00.000Z';
+    remote = cloud;
+    const born0 = S.born, keepDays = Object.keys(cloud.days).length;
+    S = Object.assign(DEF(), { born: born0, bornFresh: true, updatedAt: new Date().toISOString(), days: { '2030-01-05': { w: 70.3 } } });
+    localStorage.setItem(KEY, JSON.stringify(S));
+    calls.length = 0; await syncNow();
+    ok('新生设备从云端恢复', S.days['2026-11-21'] && S.days['2026-11-21'].water === 500 && S.sessions.length > 3 && Object.keys(S.days).length >= keepDays + 1, Object.keys(S.days).length);
+    ok('恢复后保留本机 born', S.born === born0 && JSON.parse(localStorage.getItem(KEY)).born === born0, S.born);
+    ok('本机多的那天合并后推回云端', S.days['2030-01-05'].w === 70.3 && remote.days['2030-01-05'] && calls.some(c => c.method === 'PUT'), calls.map(c => c.method));
+    save(); clearTimeout(SYNC.timer); SYNC.timer = null;
+    ok('恢复后 save 不被防覆盖拦住', JSON.parse(localStorage.getItem(KEY)).updatedAt === S.updatedAt && !GUARD_HIT, GUARD_HIT);
+
+    // 云端更新（别的设备）→ 拉下来；本机更新 → 推上去
+    remote = JSON.parse(JSON.stringify(S)); remote.updatedAt = '2099-01-01T00:00:00.000Z'; remote.days['2026-11-23'] = { w: 71 };
+    calls.length = 0; await syncNow();
+    ok('云端更新时拉下来、不推', S.days['2026-11-23'] && !calls.some(c => c.method === 'PUT'), calls.map(c => c.method));
+    remote.updatedAt = '2000-01-01T00:00:00.000Z'; remote.days = { '2026-01-01': {} };
+    S.updatedAt = '2100-01-01T00:00:00.000Z'; calls.length = 0; await syncNow();
+    ok('本机更新时推上去', calls.some(c => c.method === 'PUT') && remote.days['2026-11-23'], calls.map(c => c.method));
+
+    // 失败：401 / 离线 → 显示原因，下次再试
+    status = 401; await syncNow();
+    ok('401 显示 token 无效', /token 无效/.test(SYNC.st.err), SYNC.st);
+    status = 0; window.fetch = async () => { throw new TypeError('Failed to fetch') };
+    await syncNow();
+    ok('离线显示原因', /连不上|离线/.test(SYNC.st.err), SYNC.st);
+    go('set', VIEW);
+    ok('设置页有云端同步卡片和失败原因', /云端同步/.test(document.body.textContent) && !!$$('[data-a=ghsync]') && /失败/.test(document.body.textContent));
+  } catch (e) { out.push('FAIL 同步异常 ' + e.message); }
+  window.fetch = realFetch; localStorage.removeItem(TOKEN_KEY); localStorage.removeItem(SYNC_KEY);
   document.body.insertAdjacentHTML('afterbegin', '<pre id="test-result">' + out.join('\n') + '</pre>');
 })();

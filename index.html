@@ -283,10 +283,10 @@ const UNI=new Set(['d2b','d2d_uc','d4b','d3f']);
 const ALL_EX=[];for(const k in PLAN)for(const e of PLAN[k].ex){ALL_EX.push(e);for(const a of ALT[e[0]]||[])ALL_EX.push(a)}
 const OLD=[['杠铃深蹲',71.3,6],['卧推',61.3,9],['硬拉',81.3,8]];
 
+const DEF=()=>({v:1,days:{},sessions:[],custom:[],settings:{prot:165,kcal:2500,fat:65,trainDays:[1,2,4,5]}});
 function load(){
   let s=null;try{s=JSON.parse(localStorage.getItem(KEY))}catch(e){}
-  return Object.assign({v:1,days:{},sessions:[],custom:[],
-    settings:{prot:165,kcal:2500,fat:65,trainDays:[1,2,4,5]}},s||{});
+  return Object.assign(DEF(),s||{});
 }
 let S=load();
 // 诊断：本地数据从哪天开始的（数据被系统清掉后会变成清掉之后第一次打开的时间）
@@ -298,11 +298,86 @@ try{navigator.storage&&navigator.storage.persist&&navigator.storage.persist().th
 if(!S.settings.v2){if(S.settings.kcal===2550&&S.settings.prot===140){S.settings.kcal=2500;S.settings.prot=165;S.settings.fat=65}S.settings.v2=1;try{localStorage.setItem(KEY,JSON.stringify(S))}catch(e){}}
 // 防覆盖：写之前先看存储里是不是另一份数据（born 不同）。是的话说明这次启动时没读到真数据，不能拿空数据盖掉它，改成重新加载。
 let GUARD_HIT=false;
+// BOOT：启动时一次性 seed 的 save 不打 updatedAt（不然一台旧设备一打开新版本就会「比云端新」，把别的设备的数据盖掉）
+let BOOT=true,BOOT_DIRTY=false;
 function save(){try{
   const raw=localStorage.getItem(KEY);
   if(raw){let o=null;try{o=JSON.parse(raw)}catch(e){}
     if(o&&o.born&&S.born&&o.born!==S.born){if(!GUARD_HIT){GUARD_HIT=true;location.reload()}return}}
-  localStorage.setItem(KEY,JSON.stringify(S))}catch(e){toast('本地存储不可用，请导出备份')}}
+  if(BOOT)BOOT_DIRTY=true;else S.updatedAt=new Date().toISOString();
+  localStorage.setItem(KEY,JSON.stringify(S))}catch(e){toast('本地存储不可用，请导出备份')}
+  if(!BOOT&&ghTok()){clearTimeout(SYNC.timer);SYNC.timer=setTimeout(()=>{SYNC.timer=null;syncNow()},5000)}}
+
+/* ---------- 云端同步：GitHub 私有仓库 Yuchen808/Lean_Bulk-Data 的 data.json ----------
+   token 只存在这台设备的 localStorage（lbos.ghtoken），不进代码仓库。updatedAt 新的赢。 */
+const TOKEN_KEY='lbos.ghtoken',SYNC_KEY='lbos.sync';
+const GH='https://api.github.com/repos/Yuchen808/Lean_Bulk-Data/contents/data.json';
+const SYNC={st:(()=>{try{return JSON.parse(localStorage.getItem(SYNC_KEY))||{}}catch(e){return{}}})(),busy:false,again:false,timer:null};
+function ghTok(){try{return localStorage.getItem(TOKEN_KEY)||''}catch(e){return''}}
+const b64e=s=>{const b=new TextEncoder().encode(s);let x='';for(let i=0;i<b.length;i+=0x8000)x+=String.fromCharCode.apply(null,b.subarray(i,i+0x8000));return btoa(x)};
+const b64d=s=>new TextDecoder().decode(Uint8Array.from(atob((s||'').replace(/\s/g,'')),c=>c.charCodeAt(0)));
+const ghH=(tok,raw)=>({Authorization:'Bearer '+tok,Accept:raw?'application/vnd.github.raw+json':'application/vnd.github+json'});
+function syncErr(e){
+  if(e===401)return'token 无效或已过期，重新粘一个';
+  if(e===403)return'token 没有权限（要给 Lean_Bulk-Data 的 Contents 读写）';
+  if(e===404)return'找不到 Lean_Bulk-Data（或 token 没选这个仓库）';
+  if(e===409||e===422)return'云端刚被改过，下次保存时再同步';
+  if(typeof e==='number')return'GitHub 返回 '+e+'，下次保存时再试';
+  return navigator.onLine===false?'离线，联网后再同步':'连不上 GitHub，下次保存时再试';
+}
+function syncMark(o){Object.assign(SYNC.st,o);try{localStorage.setItem(SYNC_KEY,JSON.stringify(SYNC.st))}catch(e){}if(typeof TAB!=='undefined'&&TAB==='set')render()}
+async function ghGet(tok){
+  const r=await fetch(GH,{headers:ghH(tok),cache:'no-store'});
+  if(r.status===404)return{sha:null,data:null};
+  if(!r.ok)throw r.status;
+  const j=await r.json();let txt=j.content?b64d(j.content):'';
+  // 超过 1MB 时 contents API 不带 content，改用 raw
+  if(!txt&&j.size>0){const r2=await fetch(GH,{headers:ghH(tok,1),cache:'no-store'});if(!r2.ok)throw r2.status;txt=await r2.text()}
+  let data=null;try{data=JSON.parse(txt)}catch(e){}
+  return{sha:j.sha,data};
+}
+async function ghPut(tok,sha){
+  const body={message:'sync '+(S.updatedAt||''),content:b64e(JSON.stringify(S,null,1))};if(sha)body.sha=sha;
+  const r=await fetch(GH,{method:'PUT',headers:Object.assign(ghH(tok),{'Content-Type':'application/json'}),body:JSON.stringify(body)});
+  if(!r.ok)throw r.status;
+}
+// 用云端数据恢复：保留本机 born / bornFresh（不然防覆盖 guard 会误触发）。merge=true 时本机多出来的天 / 训练也留下。
+function restoreRemote(r,merge){
+  const old=S;let added=0;
+  S=Object.assign(DEF(),r,{born:old.born,bornFresh:old.bornFresh});
+  if(merge){for(const k in old.days)if(!S.days[k]){S.days[k]=old.days[k];added++}
+    for(const x of old.sessions||[])if(!S.sessions.some(y=>y.date===x.date)){S.sessions.push(x);added++}
+    if(added)S.sessions.sort((a,b)=>a.date<b.date?-1:a.date>b.date?1:0)}
+  S.cloudAt=new Date().toISOString();
+  try{localStorage.setItem(KEY,JSON.stringify(S))}catch(e){}
+  return added;
+}
+// 规则：本机是新生的（被清过、还没从云端恢复过）或云端 updatedAt 更新 → 用云端；本机更新 → 推上去。
+async function syncNow(){
+  const tok=ghTok();if(!tok)return;
+  if(SYNC.busy){SYNC.again=true;return}
+  SYNC.busy=true;let msg='';
+  try{
+    let{sha,data}=await ghGet(tok);
+    const has=!!(data&&data.days&&Object.keys(data.days).length);
+    const fresh=S.bornFresh&&!S.cloudAt;
+    let push=true;
+    if(has&&(fresh||(data.updatedAt||'')>(S.updatedAt||''))){
+      const added=restoreRemote(data,fresh);BOOT_DIRTY=false;msg='已从云端恢复';
+      if(added){S.updatedAt=new Date().toISOString();try{localStorage.setItem(KEY,JSON.stringify(S))}catch(e){}}else push=false;
+      if(typeof render==='function')render();
+    }else if(has&&(S.updatedAt||'')===(data.updatedAt||'')&&!BOOT_DIRTY)push=false;
+    if(push){
+      if(BOOT_DIRTY){S.updatedAt=new Date().toISOString();BOOT_DIRTY=false;try{localStorage.setItem(KEY,JSON.stringify(S))}catch(e){}}
+      try{await ghPut(tok,sha)}catch(e){if(e!==409&&e!==422)throw e;sha=(await ghGet(tok)).sha;await ghPut(tok,sha)}
+    }
+    syncMark({at:new Date().toISOString(),err:''});
+  }catch(e){syncMark({err:syncErr(e),errAt:new Date().toISOString()})}
+  finally{SYNC.busy=false;if(msg&&typeof toast==='function')toast(msg);if(SYNC.again){SYNC.again=false;syncNow()}}
+}
+addEventListener('online',()=>{if(SYNC.st.err)syncNow()});
+// 切到后台时，还没推的改动马上推
+document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='hidden'&&SYNC.timer){clearTimeout(SYNC.timer);SYNC.timer=null;syncNow()}});
 
 /* ---------- 日期 ---------- */
 const pad=n=>String(n).padStart(2,'0');
@@ -625,7 +700,14 @@ function vSet(){
     <div class="sub" style="margin-top:4px">Strong → Profile → 齿轮 → Export Data → CSV，存到「文件」后在这里选。热身组和递减组会跳过，每个动作取所有正式组的平均重量和平均次数。同一次训练重复导入会覆盖，不会重复。</div>
     <button data-a="simp" style="margin-top:10px;width:100%">选择 Strong CSV</button>
     <input type="file" id="strongf" accept=".csv,text/csv,text/comma-separated-values" class="hidden"></div>
-  <div class="card"><div class="lbl">数据只存在这台手机的浏览器里</div>
+  <div class="card"><div class="lbl">云端同步</div>
+    <div class="sub" style="margin-top:4px">每次改动 5 秒后自动存进 GitHub 私有仓库 Lean_Bulk-Data。浏览器数据被清了，粘回 token 就全部恢复。token 只存在这台设备。</div>
+    ${ghTok()?`<div class="sub" style="margin-top:8px">已设置 token（…${ghTok().slice(-4)}）</div>`:''}
+    <input id="ghtok" type="password" autocomplete="off" placeholder="${ghTok()?'换一个 token':'粘贴 GitHub token（github_pat_…）'}" style="width:100%;margin-top:8px">
+    <div class="grid2" style="margin-top:8px"><button data-a="ghsave">保存 token</button><button class="solid" data-a="ghsync">立即同步</button></div>
+    <div class="sub" style="margin-top:8px;line-height:1.7">上次同步：${SYNC.st.at?SYNC.st.at.replace('T',' ').slice(0,16)+' UTC':'还没有'}${SYNC.busy?' · 同步中…':''}${SYNC.st.err?`<br><span style="color:#c0392b">失败：${SYNC.st.err}（${(SYNC.st.errAt||'').replace('T',' ').slice(5,16)} UTC）</span>`:''}</div>
+    ${ghTok()?'<button data-a="ghdel" style="margin-top:8px;width:100%">移除 token</button>':''}</div>
+  <div class="card"><div class="lbl">${ghTok()?'备份文件':'数据只存在这台手机的浏览器里'}</div>
     <div class="sub" style="margin-top:4px">换手机或清浏览器数据前先导出。建议每周日导出一次存进 iCloud。</div>
     <div class="grid2" style="margin-top:10px"><button data-a="exp">导出 JSON</button><button data-a="imp">导入 JSON</button></div>
     <input type="file" id="impf" accept="application/json" class="hidden"></div>
@@ -855,6 +937,10 @@ document.addEventListener('click',e=>{
     case'rmc':S.custom.splice(+b.dataset.i,1);save();break;
     case'exp':{const bl=new Blob([JSON.stringify(S,null,1)],{type:'application/json'});const u=URL.createObjectURL(bl);const l=document.createElement('a');l.href=u;l.download='lean-bulk-'+TODAY()+'.json';l.click();setTimeout(()=>URL.revokeObjectURL(u),2000);break}
     case'imp':$('#impf').click();return;
+    case'ghsave':{const t=($('#ghtok').value||'').trim();if(!t)return toast('先粘贴 token');try{localStorage.setItem(TOKEN_KEY,t)}catch(_){return toast('本地存储不可用')}
+      syncMark({err:''});toast('token 已保存，正在同步');syncNow();break}
+    case'ghsync':if(!ghTok())return toast('先粘贴 token');toast('正在同步');syncNow();break;
+    case'ghdel':if(!confirm('移除这台设备上的 token？云端数据不动。'))return;try{localStorage.removeItem(TOKEN_KEY)}catch(_){}syncMark({at:'',err:''});break;
     case'simp':$('#strongf').click();return;
   }
   render();
@@ -1113,6 +1199,7 @@ if(!S.seed1119t){if(!S.sessions.some(x=>x.date==='2026-11-19')){
   S.sessions.sort((a,b)=>a.date<b.date?-1:a.date>b.date?1:0);day('2026-11-19').train=true}
   S.seed1119t=1;save()}
 render();
+BOOT=false;if(ghTok())syncNow();
 if('serviceWorker' in navigator&&location.protocol==='https:')navigator.serviceWorker.register('sw.js').catch(()=>{});
 </script>
 </body>
