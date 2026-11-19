@@ -267,7 +267,7 @@ const PLAN={
     ['d2d','绳索 EZ 杆弯举',10,12,2.5],['d2e','腿举提踵',12,15,5]]},
   D3:{n:'全身 C',ex:[
     ['d3a','史密斯平推',8,10,2.5],['d3b','反握高位下拉',8,10,2.5],['d3c','哑铃登箱 / 箭步蹲',8,10,2],
-    ['d3d','绳索面拉',12,15,2.5],['d3e','绳索卷腹',12,15,2.5]]},
+    ['d3d','绳索面拉',12,15,2.5],['d3e','绳索卷腹',12,15,2.5],['d3f','单臂绳索侧平举',12,15,1.25]]},
   D4:{n:'全身 D',ex:[
     ['d4a','哑铃坐姿推肩',8,10,2],['d4b','单臂划船（哑铃 / 绳索）',8,10,2],['d4c','卧姿腿弯举 / 早安式',10,12,2],
     ['d4d','哑铃锤式弯举',10,12,1],['d4e','绳索三头下压',10,12,2.5]]}
@@ -279,7 +279,7 @@ const ALT={
   d2e:[['d2e_lp','腿举',8,12,5]]
 };
 // 单侧动作：左右各记一组
-const UNI=new Set(['d2b','d2d_uc','d4b']);
+const UNI=new Set(['d2b','d2d_uc','d4b','d3f']);
 const ALL_EX=[];for(const k in PLAN)for(const e of PLAN[k].ex){ALL_EX.push(e);for(const a of ALT[e[0]]||[])ALL_EX.push(a)}
 const OLD=[['杠铃深蹲',71.3,6],['卧推',61.3,9],['硬拉',81.3,8]];
 
@@ -386,7 +386,7 @@ const STRONG_MAP={
   'Seated Wide-Grip Row (Cable)':'d2b_scr','Seated Row (Cable)':'d2b_scr',
   'Romanian Deadlift (Dumbbell)':'d2c','Bicep Curl (Cable)':'d2d','Bicep Curl (Dumbbell)':'d2d_db','Leg Press':'d2e_lp','Calf Press on Leg Press':'d2e',
   'Bench Press (Smith Machine)':'d3a','Lunge (Dumbbell)':'d3c','Dumbbell Step Up':'d3c',
-  'Face Pull (Cable)':'d3d','Cable Crunch':'d3e',
+  'Face Pull (Cable)':'d3d','Cable Crunch':'d3e','Lateral Raise (Cable)':'d3f',
   'Seated Overhead Press (Dumbbell)':'d4a','Lying Leg Curl (Machine)':'d4c',
   'Hammer Curl (Dumbbell)':'d4d','Triceps Pushdown (Cable - Straight Bar)':'d4e',
   'Good Morning (Barbell)':'d4c','Triceps Pushdown (Cable - Rope)':'d4e'
@@ -1099,6 +1099,19 @@ if(!S.seedT1112){
     d3d:st([[13.6,20],[15.9,12],[13.6,15]]),
     d3e:st([[27.2,12]])},'Full Body_2A');
   S.sessions.sort((a,b)=>a.date<b.date?-1:a.date>b.date?1:0);S.seedT1112=1;save()}
+// 11/19 D3 训练（Whole Body_2A，Strong 截图；热身 / 递减组不算；绳索侧平举 6 组按前 3 左后 3 右），只跑一次
+if(!S.seed1119t){if(!S.sessions.some(x=>x.date==='2026-11-19')){
+  const st=a=>{const r1=v=>Math.round(v*10)/10;return{w:r1(a.reduce((x,y)=>x+y[0],0)/a.length),r:r1(a.reduce((x,y)=>x+y[1],0)/a.length),n:a.length,all:a}};
+  const L=st([[2.3,12],[2.3,15],[2.3,10]]),R=st([[2.3,13],[2.3,12],[2.3,12]]);
+  S.sessions.push({date:'2026-11-19',day:'D3',src:'seed',name:'Whole Body_2A',sets:{
+    d3a:st([[41.3,9],[41.3,10],[41.3,14]]),
+    d3b:st([[50,9],[50,9],[50,8]]),
+    d3c:st([[40,12],[40,12],[40,12],[40,15]]),
+    d3d:st([[15.9,18],[15.9,18],[15.9,16]]),
+    d3e:st([[29.5,15]]),
+    d3f:{w:L.w,r:L.r,wR:R.w,rR:R.r}}});
+  S.sessions.sort((a,b)=>a.date<b.date?-1:a.date>b.date?1:0);day('2026-11-19').train=true}
+  S.seed1119t=1;save()}
 render();
 if('serviceWorker' in navigator&&location.protocol==='https:')navigator.serviceWorker.register('sw.js').catch(()=>{});
 </script>
