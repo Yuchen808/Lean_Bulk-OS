@@ -293,7 +293,7 @@ let S=load();
 if(!S.born){S.born=new Date().toISOString();S.bornFresh=!localStorage.getItem(KEY);try{localStorage.setItem(KEY,JSON.stringify(S))}catch(e){}}
 const STANDALONE=(window.matchMedia&&matchMedia('(display-mode: standalone)').matches)||navigator.standalone===true;
 let DIAG={persisted:null,usage:null};
-try{navigator.storage&&navigator.storage.persist&&navigator.storage.persist().then(p=>{DIAG.persisted=p});
+try{navigator.storage&&navigator.storage.persist&&navigator.storage.persist().then(p=>{DIAG.persisted=p;if(typeof TAB!=='undefined'&&TAB==='set')render()});
   navigator.storage&&navigator.storage.estimate&&navigator.storage.estimate().then(e=>{DIAG.usage=e.usage})}catch(e){}
 if(!S.settings.v2){if(S.settings.kcal===2550&&S.settings.prot===140){S.settings.kcal=2500;S.settings.prot=165;S.settings.fat=65}S.settings.v2=1;try{localStorage.setItem(KEY,JSON.stringify(S))}catch(e){}}
 // 防覆盖：写之前先看存储里是不是另一份数据（born 不同）。是的话说明这次启动时没读到真数据，不能拿空数据盖掉它，改成重新加载。
