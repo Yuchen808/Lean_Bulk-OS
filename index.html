@@ -828,7 +828,8 @@ function groupChips(items){
   const G=GROUPS.map(g=>g[1].filter(id=>id==='veg'?VEG_IDS.some(v=>!have.has(v)):!have.has(id))
     .map(id=>`<button data-a="iadd" data-v="${id}">+ ${id==='veg'?'蔬菜':FOOD[id].n}</button>`));
   (S.myFoods||[]).forEach((m,i)=>{if(!haveN.has(mkey(m.n)))G[groupOf(m.n)].push(`<button data-a="myadd" data-i="${i}" style="border-style:dashed">+ ${escH(m.n)}</button>`)});
-  return G.map((b,i)=>b.length?`<div class="lbl" style="margin-top:14px">${GROUPS[i][0]}</div><div class="chips">${b.join('')}</div>`:'').join('')}
+  // 显示顺序：外食 / 成品、零食放最后（匹配优先级不变，所以 GROUPS 里它们仍在最前）
+  return [...GROUPS.keys()].filter(i=>i>1).concat([0,1]).map(i=>{const b=G[i];return b.length?`<div class="lbl" style="margin-top:14px">${GROUPS[i][0]}</div><div class="chips">${b.join('')}</div>`:''}).join('')}
 function myChips(items){const have=new Set(items.filter(x=>x[0]==='cx').map(x=>mkey(x[2]&&x[2].n)));
   const l=(S.myFoods||[]).map((m,i)=>({m,i})).filter(({m})=>!have.has(mkey(m.n))).slice(0,16);
   return l.length?`<div class="lbl" style="margin-top:14px">我加过的</div><div class="chips">${l.map(({m,i})=>`<button data-a="myadd" data-i="${i}">+ ${escH(m.n)}</button>`).join('')}</div>`:''}
