@@ -640,16 +640,16 @@ function calSheet(){
     <button class="ghost" data-a="pick" data-v="${today}">回到今天</button></div></div></div>`;
 }
 
-function spark(pts,w=320,hgt=70,goalA,goalB){
+function spark(pts,w=320,hgt=70,goalA,goalB,rel){
   if(pts.length<2)return'<div class="sub">至少两个数据点才画线。</div>';
   const xs=pts.map(p=>p[0]),ys=pts.map(p=>p[1]);
-  let lo=Math.min(...ys),hi=Math.max(...ys);if(hi-lo<0.6){const m=(hi+lo)/2;lo=m-.3;hi=m+.3}
+  let lo=Math.min(...ys),hi=Math.max(...ys);const top=hi;if(rel&&lo>0)hi=Math.max(hi,lo*(1+rel));else if(hi-lo<0.6){const m=(hi+lo)/2;lo=m-.3;hi=m+.3}
   const X=i=>34+(w-44)*i/(pts.length-1),Y=v=>hgt-12-(hgt-24)*(v-lo)/(hi-lo);
   const d=pts.map((p,i)=>(i?'L':'M')+X(i).toFixed(1)+' '+Y(p[1]).toFixed(1)).join(' ');
   return `<svg viewBox="0 0 ${w} ${hgt}" width="100%" height="${hgt}" preserveAspectRatio="none" style="display:block;margin-top:8px;color:var(--ink)">
    <path d="${d}" fill="none" stroke="currentColor" stroke-width="1.6" vector-effect="non-scaling-stroke"/>
    <circle cx="${X(pts.length-1)}" cy="${Y(ys[ys.length-1])}" r="3" fill="var(--accent)"/>
-   <text x="0" y="9">${hi.toFixed(1)}</text><text x="0" y="${hgt-1}">${lo.toFixed(1)}</text></svg>`;
+   <text x="0" y="${rel?Math.min(hgt-13,Math.max(9,Y(top)+3)).toFixed(1):9}">${(rel?top:hi).toFixed(1)}</text><text x="0" y="${hgt-1}">${lo.toFixed(1)}</text></svg>`;
 }
 
 function vTrend(){
@@ -671,11 +671,13 @@ function vTrend(){
   let ex='';
   const since=addD(TODAY(),-120),others=[];const seen=new Set(ALL_EX.map(e=>e[0]));
   for(const x of S.sessions)if(x.date>=since)for(const id in x.sets)if(!seen.has(id)){seen.add(id);others.push([id,(S.exNames||{})[id]||id.replace(/^sx:/,'')])}
-  for(const[id,n]of [...ALL_EX,...others]){
-    const p=S.sessions.filter(s=>s.sets[id]).map(s=>[s.date,e1rm(s.sets[id].w,s.sets[id].r)]);
+  const series=[...ALL_EX,...others].map(([id,n])=>[n,S.sessions.filter(s=>s.sets[id]).map(s=>[s.date,e1rm(s.sets[id].w,s.sets[id].r)])]);
+  // 所有力量曲线共用同一个百分比纵轴：涨得多的线更陡
+  const rel=Math.max(0.05,...series.filter(([,p])=>p.length>1).map(([,p])=>{const ys=p.map(q=>q[1]),lo=Math.min(...ys);return lo>0?Math.max(...ys)/lo-1:0}));
+  for(const[n,p]of series){
     if(!p.length)continue;
     const first=p[0][1],now=p[p.length-1][1];
-    ex+=`<div class="ex"><div class="top"><div class="name">${n}</div><div class="rng num">估算 1RM ${now.toFixed(1)}kg ${p.length>1?`<b style="color:var(--ink)">${now-first>=0?'+':''}${((now/first-1)*100).toFixed(0)}%</b>`:''}</div></div>${p.length>1?spark(p,320,44):''}</div>`;
+    ex+=`<div class="ex"><div class="top"><div class="name">${n}</div><div class="rng num">估算 1RM ${now.toFixed(1)}kg ${p.length>1?`<b style="color:var(--ink)">${now-first>=0?'+':''}${((now/first-1)*100).toFixed(0)}%</b>`:''}</div></div>${p.length>1?spark(p,320,44,undefined,undefined,rel):''}</div>`;
   }
   h+=`<div class="card"><div class="lbl">力量 · 估算 1RM</div>${ex||'<div class="sub" style="margin-top:6px">还没有训练记录。</div>'}</div>
   <div class="card list"><div class="lbl" style="margin-bottom:4px">停练前（杠铃，仅作参照）</div>${OLD.map(([n,w,r])=>`<div class="r num"><span>${n}</span><span class="sub">${w}kg × ${r} · 1RM ≈ ${e1rm(w,r).toFixed(0)}</span></div>`).join('')}<div class="sub" style="margin-top:6px">现在练的是史密斯和哑铃，数字不能直接比，看自己的曲线有没有往上走。</div></div>`;
