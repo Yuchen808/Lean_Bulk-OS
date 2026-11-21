@@ -1247,6 +1247,19 @@ if(!S.seed1120d){const D=day('2026-11-20');
     ['cx',50,{n:'白金枪鱼 + 凤尾鱼（油浸）',p:25,c:0,f:10,k:190,est:1}],['v_pep',30],
     ['cx',260,{n:'Pulled beef 意面 + 帕玛森（3/4 碟）',p:10,c:20,f:9,k:205,est:1}],['oil',15]]);
   D.done.dinner=true;S.seed1120d=1;save()}
+// 11/21 D4 训练（Whole Body_2B，Strong 截图；热身 / 递减组不算；单臂划船 6 组按前 3 左后 3 右；侧平举是新加的 2 组），只跑一次
+if(!S.seed1121t){if(!S.sessions.some(x=>x.date==='2026-11-21')){
+  const st=a=>{const r1=v=>Math.round(v*10)/10;return{w:r1(a.reduce((x,y)=>x+y[0],0)/a.length),r:r1(a.reduce((x,y)=>x+y[1],0)/a.length),n:a.length,all:a}};
+  const L=st([[16,14],[16,12],[16,12]]),R=st([[16,10],[16,12],[16,12]]);
+  S.sessions.push({date:'2026-11-21',day:'D4',src:'seed',name:'Whole Body_2B',sets:{
+    d4a:st([[28,12],[28,12],[28,11]]),
+    d1d:st([[16,14],[16,10]]),
+    d4b:{w:L.w,r:L.r,wR:R.w,rR:R.r},
+    d4c:st([[61.3,11],[61.3,12],[61.3,12]]),
+    d4d:st([[20,12]]),
+    d4e:st([[15.9,14],[15.9,8],[15.9,7]])}});
+  S.sessions.sort((a,b)=>a.date<b.date?-1:a.date>b.date?1:0);day('2026-11-21').train=true}
+  S.seed1121t=1;save()}
 render();
 BOOT=false;if(ghTok())syncNow();
 if('serviceWorker' in navigator&&location.protocol==='https:')navigator.serviceWorker.register('sw.js').catch(()=>{});
