@@ -652,6 +652,22 @@ function spark(pts,w=320,hgt=70,goalA,goalB,rel){
    <text x="0" y="${rel?Math.min(hgt-13,Math.max(9,Y(top)+3)).toFixed(1):9}">${(rel?top:hi).toFixed(1)}</text><text x="0" y="${hgt-1}">${lo.toFixed(1)}</text></svg>`;
 }
 
+// 力量曲线：一次训练一个点，点距固定；点多到超出宽度就横向滑动（默认停在最新一次）
+function sparkEx(pts,rel,hgt=44,step=26){
+  const ys=pts.map(p=>p[1]);const lo=Math.min(...ys),top=Math.max(...ys);
+  const hi=Math.max(top,lo*(1+rel),lo+0.6);
+  const w=12+step*(pts.length-1);
+  const X=i=>6+step*i,Y=v=>hgt-12-(hgt-24)*(v-lo)/(hi-lo);
+  const d=pts.map((p,i)=>(i?'L':'M')+X(i)+' '+Y(p[1]).toFixed(1)).join(' ');
+  const dots=pts.map((p,i)=>`<circle cx="${X(i)}" cy="${Y(p[1]).toFixed(1)}" r="${i===pts.length-1?3:2}" fill="${i===pts.length-1?'var(--accent)':'currentColor'}"><title>${p[0]} · ${p[1].toFixed(1)}kg</title></circle>`).join('');
+  const ty=Math.min(hgt-13,Math.max(9,Y(top)+3)).toFixed(1);
+  return `<div style="display:flex;margin-top:8px;color:var(--ink)">
+   <svg viewBox="0 0 34 ${hgt}" width="34" height="${hgt}" style="flex:none"><text x="0" y="${ty}">${top.toFixed(1)}</text><text x="0" y="${hgt-1}">${lo.toFixed(1)}</text></svg>
+   <div style="display:flex;flex-direction:row-reverse;overflow-x:auto;flex:1;min-width:0;scrollbar-width:none">
+    <svg viewBox="0 0 ${w} ${hgt}" width="${w}" height="${hgt}" style="flex:none;margin-right:auto"><path d="${d}" fill="none" stroke="currentColor" stroke-width="1.6"/>${dots}</svg>
+   </div></div>`;
+}
+
 function vTrend(){
   const ws=weights();
   const last=ws.length?ws[ws.length-1][0]:TODAY();
@@ -677,7 +693,7 @@ function vTrend(){
   for(const[n,p]of series){
     if(!p.length)continue;
     const first=p[0][1],now=p[p.length-1][1];
-    ex+=`<div class="ex"><div class="top"><div class="name">${n}</div><div class="rng num">估算 1RM ${now.toFixed(1)}kg ${p.length>1?`<b style="color:var(--ink)">${now-first>=0?'+':''}${((now/first-1)*100).toFixed(0)}%</b>`:''}</div></div>${p.length>1?spark(p,320,44,undefined,undefined,rel):''}</div>`;
+    ex+=`<div class="ex"><div class="top"><div class="name">${n}</div><div class="rng num">估算 1RM ${now.toFixed(1)}kg ${p.length>1?`<b style="color:var(--ink)">${now-first>=0?'+':''}${((now/first-1)*100).toFixed(0)}%</b>`:''}</div></div>${p.length>1?sparkEx(p,rel):''}</div>`;
   }
   h+=`<div class="card"><div class="lbl">力量 · 估算 1RM</div>${ex||'<div class="sub" style="margin-top:6px">还没有训练记录。</div>'}</div>
   <div class="card list"><div class="lbl" style="margin-bottom:4px">停练前（杠铃，仅作参照）</div>${OLD.map(([n,w,r])=>`<div class="r num"><span>${n}</span><span class="sub">${w}kg × ${r} · 1RM ≈ ${e1rm(w,r).toFixed(0)}</span></div>`).join('')}<div class="sub" style="margin-top:6px">现在练的是史密斯和哑铃，数字不能直接比，看自己的曲线有没有往上走。</div></div>`;
