@@ -1260,6 +1260,10 @@ if(!S.seed1121t){if(!S.sessions.some(x=>x.date==='2026-11-21')){
     d4e:st([[15.9,14],[15.9,8],[15.9,7]])}});
   S.sessions.sort((a,b)=>a.date<b.date?-1:a.date>b.date?1:0);day('2026-11-21').train=true}
   S.seed1121t=1;save()}
+// 11/21 加：老干妈 25g（油辣椒，按每 100g 约 650 kcal 估），只跑一次
+if(!S.seed1121x){const D=day('2026-11-21');
+  D.extras.push(snackEntry({n:'老干妈',snack:1,items:[['cx',25,{n:'老干妈（油辣椒）',p:10,c:12,f:60,k:650,est:1}]]}));
+  S.seed1121x=1;save()}
 render();
 BOOT=false;if(ghTok())syncNow();
 if('serviceWorker' in navigator&&location.protocol==='https:')navigator.serviceWorker.register('sw.js').catch(()=>{});
