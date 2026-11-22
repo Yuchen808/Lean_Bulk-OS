@@ -130,7 +130,11 @@ const SRC={
   pm10:{n:'猪肉末 10%',p:19.5,f:10,k:175,A:152,B:192},
   pt:{n:'猪里脊',p:22,f:3,k:120,A:138,B:178},
   sal:{n:'三文鱼',p:20,f:13,k:200,A:142,B:182,fish:1,oily:1},
-  basa:{n:'巴沙鱼',p:15,f:3,k:90,A:182,B:230,fish:1}
+  basa:{n:'巴沙鱼',p:15,f:3,k:90,A:182,B:230,fish:1},
+  beef:{n:'牛肉（瘦）',p:22,f:5,k:135,A:140,B:180},
+  lamb:{n:'羊肉（腿肉）',p:20,f:9,k:160,A:155,B:195},
+  tky:{n:'火鸡胸',p:24,f:1,k:105,A:130,B:165},
+  pork:{n:'猪肉（肩）',p:19,f:10,k:170,A:160,B:205}
 };
 // 220g 熟米饭 + 200g 蔬菜 + 10ml 油
 const BASE={p:8.9,c:72,f:10.1,k:427,fib:6.9};
@@ -206,6 +210,10 @@ const MICRO={
   pt:{b12:.5,vd:.5,ca:5,fe:1,pot:400,mg:27,zn:1.9},
   sal:{va:58,fol:26,b12:3.2,vd:7,ca:9,fe:.34,pot:360,mg:27,zn:.4},
   basa:{va:10,b12:1,vd:1,ca:10,fe:.3,pot:200,mg:20,zn:.3},
+  beef:{fol:6,b12:2,vd:.1,ca:6,fe:2.2,pot:340,mg:22,zn:4.5},
+  lamb:{fol:5,b12:2.2,vd:.1,ca:10,fe:1.8,pot:300,mg:22,zn:4},
+  tky:{fol:7,b12:.5,vd:.2,ca:8,fe:.7,pot:300,mg:28,zn:1.2},
+  pork:{fol:4,b12:.7,vd:.6,ca:12,fe:1,pot:320,mg:21,zn:3},
   rice:{fol:3,ca:10,fe:.2,pot:35,mg:12,zn:.5},
   veg:{vc:15,va:200,fol:40,ca:30,fe:.6,pot:250,mg:18,zn:.4},
   v_broc:{vc:89,va:31,fol:63,ca:47,fe:.7,pot:316,mg:21,zn:.4},
@@ -226,7 +234,7 @@ const MICRO={
 };
 for(const id in MICRO)Object.assign(FOOD[id],MICRO[id]);
 // 熟重版：meal prep 之后只能称熟重。生→熟的出品率（肉约 75%，鱼约 80%），营养按 生重值 ÷ 出品率 换算
-const YIELD={cb:.75,ct:.75,pm5:.75,pm10:.75,pt:.75,sal:.8,basa:.8};
+const YIELD={cb:.75,ct:.75,pm5:.75,pm10:.75,pt:.75,sal:.8,basa:.8,beef:.72,lamb:.7,tky:.75,pork:.72};
 for(const id in SRC){const R=FOOD[id],y=YIELD[id],C={n:R.n,unit:'g',step:10,def:Math.round(R.def*y/10)*10,cooked:1,rawOf:id};
   for(const x of ['p','c','f','k','fib','vc','va','fol','b12','vd','ca','fe','pot','mg','zn'])if(R[x]!=null)C[x]=+(R[x]/y).toFixed(2);
   FOOD[id+'_ck']=C;R.ckOf=id+'_ck'}
@@ -246,12 +254,14 @@ const descItems=items=>items.map(it=>{const F=food(it);return `${F.n} ${fmtAmt(F
 function snackEntry(sn){const t=sumItems(sn.items);for(const x in t)t[x]=Math.round(t[x]*10)/10;return {n:sn.n,...t,snack:1,items:sn.items.map(x=>x.slice())}}
 const MEAT_IDS=Object.keys(SRC),SIDE_IDS=['rice','tato','swp','veg','oil','egg'];
 const BF_PRESETS=[
+  {n:'yw香蕉奶昔',items:[['milk',300],['pb',20],['oat',70],['cx',15,{n:'奇亚籽',p:16.5,c:42,f:30.7,k:486,fib:34,ca:631,mg:335,zn:4.6,est:1}],['ban',1]]},
   {n:'燕麦蛋白',items:[['egg',1],['ew',250],['oat',60],['milk',200]]},
   {n:'3 全蛋',items:[['egg',3],['oil',5]]},
   {n:'Sourdough + 香蕉 + 花生酱',items:[['sd',100],['ban',1],['pb',20]]}
 ];
 // 练前：默认香蕉 + 全麦吐司，可以按天改
 const PRE_PRESETS=[
+  {n:'yw香蕉奶昔',items:[['milk',300],['pb',20],['oat',70],['cx',15,{n:'奇亚籽',p:16.5,c:42,f:30.7,k:486,fib:34,ca:631,mg:335,zn:4.6,est:1}],['ban',1]]},
   {n:'香蕉 + 全麦吐司',items:[['ban',1],['wt',1]]},
   {n:'Sourdough + 香蕉 + 花生酱',items:[['sd',50],['ban',1],['pb',15]]}
 ];
@@ -404,7 +414,7 @@ const food=it=>it[2]?Object.assign({unit:'g',step:10},it[2]):FOOD[it[0]];
 const fmtAmt=(F,a)=>{const v=+(+a).toFixed(1);return F.unit==='g'||F.unit==='ml'?`${v}${F.unit}`:`${v} ${F.unit}`};
 const NAME={pre:'练前',bfast:'早餐',lunch:'午餐',dinner:'晚餐'},TIME={pre:'05:40',bfast:'07:30',lunch:'12:30',dinner:'19:00'};
 function defMain(D,k){const m=D.meals[k];return [[m.src,m.g!=null?m.g:SRC[m.src][D.tpl]],['rice',220],['veg',200],['oil',10]]}
-function getItems(D,k){if(k==='pre')return D.pre||PRE_PRESETS[0].items;if(k==='bfast')return D.bf||S.lastBf||BF_PRESETS[0].items;return D.meals[k].items||defMain(D,k)}
+function getItems(D,k){if(k==='pre')return D.pre||PRE_PRESETS[1].items;if(k==='bfast')return D.bf||S.lastBf||BF_PRESETS[1].items;return D.meals[k].items||defMain(D,k)}
 function setItems(D,k,it){if(k==='pre')D.pre=it;else if(k==='bfast'){D.bf=it;S.lastBf=clone(it)}else D.meals[k].items=it;save()}
 function meal(D,k){
   const items=getItems(D,k),t=ZERO();
@@ -833,7 +843,7 @@ if(!S.myFoodsInit){for(const d of Object.keys(S.days||{}).sort())for(const it of
 const GROUPS=[
   ['外食 / 成品',[],/三明治|sandwich|wrap|shawarma|·|crunchy|套餐|burger|汉堡|pizza|披萨|外卖|便当/i],
   ['零食',[],/薯片|chips|crisps|巧克力|chocolate|饼干|biscuit|cookie|蛋糕|cake|糖果|零食|坚果|\bnuts?\b|奇亚籽|chia|能量棒|\bbar\b/i],
-  ['肉 / 鱼 / 蛋',['cb','ct','pm5','pm10','pt','sal','basa','egg','ew'],/鸡|鸭|猪|牛|羊|肉|肠|鱼|虾|蟹|贝|蛋|豆腐|chicken|beef|pork|lamb|steak|fish|salmon|cod|tuna|prawn|shrimp|egg|tofu|sausage|chorizo|bacon|ham/i],
+  ['肉 / 鱼 / 蛋',['cb','ct','pm5','pm10','pt','pork','beef','lamb','tky','sal','basa','egg','ew'],/鸡|鸭|猪|牛|羊|肉|肠|鱼|虾|蟹|贝|蛋|豆腐|chicken|beef|pork|lamb|steak|fish|salmon|cod|tuna|prawn|shrimp|egg|tofu|sausage|chorizo|bacon|ham/i],
   ['主食 / 碳水',['rice','tato','swp','oat','sd','bagel','wt'],/饭|面|粉|米|年糕|饺|馄饨|馒头|饼|馕|包|吐司|bread|toast|pasta|noodle|udon|ramen|gnocchi|potato|土豆|红薯|燕麦|oat|cereal|麦片|bagel|贝果/i],
   ['奶 / 饮品',['milk','skyr'],/奶|酸奶|芝士|cheese|yogh?urt|skyr|shake|latte|咖啡|coffee|饮|juice|可乐|coke|啤酒|beer/i],
   ['水果',['ban'],/果|蕉|梨|苹果|橙|橘|莓|葡萄|芒|桃|瓜果|fruit|apple|pear|berry|orange|mango|grape|kiwi/i],

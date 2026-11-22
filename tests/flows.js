@@ -88,7 +88,9 @@
 
     // 9. 早餐组合
     $$('[data-a=edit][data-k=bfast]').click();
-    $$('[data-a=ip][data-i="1"]').click();
+    $$('[data-a=ip][data-i="0"]').click();
+    ok('早餐第一个模板是 yw香蕉奶昔', JSON.stringify(day('2026-11-08').bf.map(x => x[0])) === JSON.stringify(['milk', 'pb', 'oat', 'cx', 'ban']) && Math.abs(sumItems(day('2026-11-08').bf).k - 757) < 15, sumItems(day('2026-11-08').bf));
+    $$('[data-a=ip][data-i="2"]').click();
     ok('早餐换成 3 全蛋', JSON.stringify(day('2026-11-08').bf) === JSON.stringify([['egg', 3], ['oil', 5]]), day('2026-11-08').bf);
     $$('#sheet').innerHTML = '';
 
@@ -124,6 +126,8 @@
     $$('[data-a=addx][data-i="' + ci + '"]').click();
     ok('常用加餐一键再加', day('2026-11-08').extras.length === n0 + 2, day('2026-11-08').extras.length);
 
+    // 11b. 新肉都能生熟切换
+    ok('牛羊火鸡猪都有熟重版', ['beef', 'lamb', 'tky', 'pork'].every(id => FOOD[id].raw && FOOD[id + '_ck'] && FOOD[id + '_ck'].rawOf === id && FOOD[id + '_ck'].p > FOOD[id].p), ['beef', 'lamb', 'tky', 'pork'].map(id => FOOD[id + '_ck']));
     // 12. 练前可以按天改：默认香蕉 + 全麦吐司，点开换成 sourdough 组合，再加自定义
     go('today', '2026-11-12');
     const P = day('2026-11-12'); P.train = true; delete P.pre; delete P.done.pre; render();
@@ -132,7 +136,7 @@
     const lb = JSON.stringify(S.lastBf || null), k0 = totals(P).t.k;
     $$('[data-a=edit][data-k=pre]').click();
     ok('练前能点开编辑', !!$$('#sheet .sheet') && /练前/.test($$('#sheet').textContent));
-    $$('[data-a=ip][data-i="1"]').click();
+    $$('[data-a=ip][data-i="2"]').click();
     ok('练前换成 sourdough 组合', P.pre && P.pre.map(x => x[0]).join() === 'sd,ban,pb', P.pre);
     fire($$('.iin[data-i="2"]'), '25');
     ok('练前花生酱改成 25g', P.pre[2][1] === 25, P.pre);
