@@ -1292,6 +1292,19 @@ if(!S.seed1121t){if(!S.sessions.some(x=>x.date==='2026-11-21')){
 if(!S.seed1121x){const D=day('2026-11-21');
   D.extras.push(snackEntry({n:'老干妈',snack:1,items:[['cx',25,{n:'老干妈（油辣椒）',p:10,c:12,f:60,k:650,est:1}]]}));
   S.seed1121x=1;save()}
+// 11/22 D1 训练（Whole Body_1A，19:41 起 1h5m，Strong 截图；热身 / 递减组不算；器械推胸是课表外加的，按 Strong 名字记），只跑一次
+if(!S.seed1122t){if(!S.sessions.some(x=>x.date==='2026-11-22')){
+  const st=a=>{const r1=v=>Math.round(v*10)/10;return{w:r1(a.reduce((x,y)=>x+y[0],0)/a.length),r:r1(a.reduce((x,y)=>x+y[1],0)/a.length),n:a.length,all:a}};
+  S.exNames=S.exNames||{};S.exNames['sx:Chest Press (Machine)']='Chest Press (Machine)';
+  S.sessions.push({date:'2026-11-22',day:'D1',src:'seed',name:'Whole Body_1A',sets:{
+    d1a:st([[40,10],[40,10],[40,6]]),
+    'sx:Chest Press (Machine)':st([[43,9],[43,9],[43,9]]),
+    d1b:st([[50,12],[50,12],[50,8]]),
+    d1c:st([[51.3,10],[51.3,9],[51.3,9]]),
+    d1d:st([[16,14],[16,12]]),
+    d1e:st([[6.8,12],[6.8,10]])}});
+  S.sessions.sort((a,b)=>a.date<b.date?-1:a.date>b.date?1:0);day('2026-11-22').train=true}
+  S.seed1122t=1;save()}
 render();
 BOOT=false;if(ghTok())syncNow();
 if('serviceWorker' in navigator&&location.protocol==='https:')navigator.serviceWorker.register('sw.js').catch(()=>{});
