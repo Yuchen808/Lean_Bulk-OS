@@ -1308,6 +1308,10 @@ if(!S.seed1122t){if(!S.sessions.some(x=>x.date==='2026-11-22')){
     d1e:st([[6.8,12],[6.8,10]])}});
   S.sessions.sort((a,b)=>a.date<b.date?-1:a.date>b.date?1:0);day('2026-11-22').train=true}
   S.seed1122t=1;save()}
+// 11/23 晚饭前半顿：液体蛋白 250 + 油 5（另一半还没吃，之后再补），只跑一次
+if(!S.seed1123d){const D=day('2026-11-23');
+  if(!D.done.dinner){setItems(D,'dinner',[['ew',250],['oil',5]]);D.done.dinner=true}
+  S.seed1123d=1;save()}
 render();
 BOOT=false;if(ghTok())syncNow();
 if('serviceWorker' in navigator&&location.protocol==='https:')navigator.serviceWorker.register('sw.js').catch(()=>{});
