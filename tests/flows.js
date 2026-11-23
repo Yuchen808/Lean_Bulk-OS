@@ -14,7 +14,7 @@
 
     // 2. 已保存那天换动作，记录跟着走
     go('train', '2026-11-07');
-    fire($$('.exsel[data-slot=d2d]'), 'd2d_uc');
+    fire($$('.exsel[data-slot=d2h]'), 'd2d_uc');
     ok('换成单臂绳索弯举后记录跟着改', sess('2026-11-07').sets.d2d_uc && !sess('2026-11-07').sets.d2d_db, Object.keys(sess('2026-11-07').sets));
 
     // 3. 只改右边次数，保存后不跳回
@@ -51,6 +51,15 @@
     ok('新一天保存成功', sess('2026-11-08') && sess('2026-11-08').sets.d2c.w === 45, sess('2026-11-08'));
     go('train', '2026-11-08');
     ok('新一天保存后绿色', !!$$('.savedbox'), null);
+
+    // 7a. 2026-11-23 新课表：默认动作是新版的，不被旧记录带回去
+    OVR = {}; S.settings.alt = {}; // 清掉第 2 步手选的动作
+    const idsOf = d => { go('train', '2026-11-24'); if (!day('2026-11-24').train) $$('[data-a=trset][data-v="1"]').click(); $$('[data-a=td][data-v=' + d + ']').click(); return [...document.querySelectorAll('[data-a=exok]')].map(b => b.dataset.id).join(); };
+    for (const d of ['D1', 'D2', 'D3', 'D4']) { const g = idsOf(d), w = PLAN[d].ex.map(e => e[0]).join(); ok(d + ' 默认显示新课表', g === w, [g, w]); }
+    ok('11/22 器械推胸归到 d1f', sess('2026-11-22').sets.d1f && sess('2026-11-22').sets.d1f.w === 43, Object.keys(sess('2026-11-22').sets));
+    ok('11/24 轮到 D2', nextDay('2026-11-24') === 'D2', nextDay('2026-11-24'));
+    ok('没有重复 id', new Set(ALL_EX.map(e => e[0])).size === ALL_EX.length);
+    idsOf('D2'); ok('显示组数和超级组', /A1 · 2 组 · 8–12 次/.test(document.body.textContent));
 
     // 7b. 日历：练过的日子有绿点和淡绿底
     $$('.date.tap').click();
