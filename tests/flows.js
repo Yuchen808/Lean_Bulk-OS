@@ -46,9 +46,9 @@
     $$('[data-a=td][data-v=D2]').click();
     ok('新一天显示加重建议', $$('.trin[data-id=d2a][data-f=w]').value === '42.5', $$('.trin[data-id=d2a][data-f=w]').value);
     ok('新一天按钮是保存', !$$('.savedbox') && !!$$('[data-a=savesess]'), null);
-    fire($$('.trin[data-id=d2c][data-f=w]'), '45');
+    fire($$('.trin[data-id=d2c_bb][data-f=w]'), '45');
     $$('[data-a=savesess]').click();
-    ok('新一天保存成功', sess('2026-11-08') && sess('2026-11-08').sets.d2c.w === 45, sess('2026-11-08'));
+    ok('新一天保存成功', sess('2026-11-08') && sess('2026-11-08').sets.d2c_bb.w === 45, sess('2026-11-08'));
     go('train', '2026-11-08');
     ok('新一天保存后绿色', !!$$('.savedbox'), null);
 
