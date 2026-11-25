@@ -1334,6 +1334,12 @@ if(!S.seed1125l){const D=day('2026-11-25');const m=D.meals&&D.meals.lunch;
     ['cx',100,{n:'itsu Korean spicy noodles（1 份）',p:21.2,c:79.6,f:21.2,k:631,fib:12.2}],
     ['cx',100,{n:'itsu 加鸡肉（1 份）',p:18.3,c:0,f:2.7,k:98,est:1}]]);D.done.lunch=true}
   S.seed1125l=1;save()}
+// 11/25 加：双份热巧克力 + 很多奶油、啤酒 2 pint（按 4.5–5% lager）、热红酒 1 杯（按 175ml）；都是估算，酒精热量算在 kcal 里，只跑一次
+if(!S.seed1125x){const D=day('2026-11-25');
+  D.extras.push(snackEntry({n:'双份热巧克力 + 奶油',snack:1,items:[['cx',100,{n:'双份热巧克力 + 很多奶油（估）',p:12,c:50,f:24,k:470,ca:350,est:1}]]}));
+  D.extras.push(snackEntry({n:'啤酒 2 pint',snack:1,items:[['cx',100,{n:'Lager 2 pint（估）',p:3,c:36,f:0,k:460,est:1}]]}));
+  D.extras.push(snackEntry({n:'热红酒 1 杯',snack:1,items:[['cx',100,{n:'Mulled wine 175ml（估）',p:0,c:25,f:0,k:230,est:1}]]}));
+  S.seed1125x=1;save()}
 render();
 BOOT=false;if(ghTok())syncNow();
 if('serviceWorker' in navigator&&location.protocol==='https:')navigator.serviceWorker.register('sw.js').catch(()=>{});
