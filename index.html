@@ -1328,6 +1328,12 @@ if(!S.seed1124t){if(!S.sessions.some(x=>x.date==='2026-11-24')){
     d2h:{w:L.w,r:L.r,wR:R.w,rR:R.r}}});
   S.sessions.sort((a,b)=>a.date<b.date?-1:a.date>b.date?1:0);day('2026-11-24').train=true}
   S.seed1124t=1;save()}
+// 11/25 午：itsu Korean spicy noodles（官网 631 kcal）+ 鸡肉一份（按双份减单份照烧鸡估），只在午餐为空时写，只跑一次
+if(!S.seed1125l){const D=day('2026-11-25');const m=D.meals&&D.meals.lunch;
+  if(!m||!m.items||!m.items.length){setItems(D,'lunch',[
+    ['cx',100,{n:'itsu Korean spicy noodles（1 份）',p:21.2,c:79.6,f:21.2,k:631,fib:12.2}],
+    ['cx',100,{n:'itsu 加鸡肉（1 份）',p:18.3,c:0,f:2.7,k:98,est:1}]]);D.done.lunch=true}
+  S.seed1125l=1;save()}
 render();
 BOOT=false;if(ghTok())syncNow();
 if('serviceWorker' in navigator&&location.protocol==='https:')navigator.serviceWorker.register('sw.js').catch(()=>{});
