@@ -1340,6 +1340,10 @@ if(!S.seed1125x){const D=day('2026-11-25');
   D.extras.push(snackEntry({n:'啤酒 2 pint',snack:1,items:[['cx',100,{n:'Lager 2 pint（估）',p:3,c:36,f:0,k:460,est:1}]]}));
   D.extras.push(snackEntry({n:'热红酒 1 杯',snack:1,items:[['cx',100,{n:'Mulled wine 175ml（估）',p:0,c:25,f:0,k:230,est:1}]]}));
   S.seed1125x=1;save()}
+// 11/25 加：德国长香肠热狗配洋葱（按约 150g 香肠 + 面包 + 炒洋葱和酱估），只跑一次
+if(!S.seed1125h){const D=day('2026-11-25');
+  D.extras.push(snackEntry({n:'德国长香肠热狗 + 洋葱',snack:1,items:[['cx',100,{n:'German sausage hotdog + 洋葱（估）',p:26,c:56,f:47,k:760,fib:3,est:1}]]}));
+  S.seed1125h=1;save()}
 render();
 BOOT=false;if(ghTok())syncNow();
 if('serviceWorker' in navigator&&location.protocol==='https:')navigator.serviceWorker.register('sw.js').catch(()=>{});
