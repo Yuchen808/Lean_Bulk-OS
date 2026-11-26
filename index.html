@@ -473,7 +473,7 @@ const STRONG_MAP={
   'Squat (Smith Machine)':'d1c','Lateral Raise (Dumbbell)':'d1d','Triceps Extension (Cable)':'d1e',
   'Incline Bench Press (Smith Machine)':'d2a','Bent Over One Arm Row (Dumbbell)':'d2b',
   'Seated Wide-Grip Row (Cable)':'d2b_scr','Seated Row (Cable)':'d2b_scr',
-  'Romanian Deadlift (Dumbbell)':'d2c','Romanian Deadlift (Barbell)':'d2c_bb','Cable Reverse Fly':'d2f','Cable EZ Bar Skull Crusher':'d2g','Bayesian Cable Curl':'d2h','Bicep Curl (Cable)':'d2h','Bicep Curl (Dumbbell)':'d2d_db','Leg Press':'d2e_lp','Calf Press on Leg Press':'d2e',
+  'Romanian Deadlift (Dumbbell)':'d2c','Romanian Deadlift (Barbell)':'d2c_bb','Cable Y Raise':'d3g','Calf Press on Seated Leg Press':'d2e','Cable Reverse Fly':'d2f','Cable EZ Bar Skull Crusher':'d2g','Bayesian Cable Curl':'d2h','Bicep Curl (Cable)':'d2h','Bicep Curl (Dumbbell)':'d2d_db','Leg Press':'d2e_lp','Calf Press on Leg Press':'d2e',
   'Bench Press (Smith Machine)':'d3a','Lunge (Dumbbell)':'d3c','Dumbbell Step Up':'d3c',
   'Face Pull (Cable)':'d3d','Cable Crunch':'d3e','Lateral Raise (Cable)':'d3f',
   'Seated Overhead Press (Dumbbell)':'d4a','Lying Leg Curl (Machine)':'d4c',
@@ -1344,6 +1344,20 @@ if(!S.seed1125x){const D=day('2026-11-25');
 if(!S.seed1125h){const D=day('2026-11-25');
   D.extras.push(snackEntry({n:'德国长香肠热狗 + 洋葱',snack:1,items:[['cx',100,{n:'German sausage hotdog + 洋葱（估）',p:26,c:56,f:47,k:760,fib:3,est:1}]]}));
   S.seed1125h=1;save()}
+// 11/26 D3 训练（Whole Body_2A，21:08 起 53 分钟，Strong 截图；热身 / 递减组不算；痔疮没做登箱 / 箭步蹲；下拉是正握器械，记在反握下拉位置；侧平举用哑铃；Y 举 4 组按前 2 左后 2 右），只跑一次
+if(!S.seed1126t){if(!S.sessions.some(x=>x.date==='2026-11-26')){
+  const st=a=>{const r1=v=>Math.round(v*10)/10;return{w:r1(a.reduce((x,y)=>x+y[0],0)/a.length),r:r1(a.reduce((x,y)=>x+y[1],0)/a.length),n:a.length,all:a}};
+  const L=st([[2.3,16],[2.3,14]]),R=st([[2.3,14],[2.3,14]]);
+  S.sessions.push({date:'2026-11-26',day:'D3',src:'seed',name:'Whole Body_2A',sets:{
+    d3a:st([[51.3,10],[51.3,9],[51.3,8]]),
+    d3b:st([[55,10],[55,10],[55,10]]),
+    d3d:st([[15.9,18],[13.5,19],[13.5,18]]),
+    d1d:st([[16,16],[16,12]]),
+    d2e:st([[86,18],[97,15],[97,15]]),
+    d3g:{w:L.w,r:L.r,wR:R.w,rR:R.r},
+    d3e:st([[29.5,16]])}});
+  S.sessions.sort((a,b)=>a.date<b.date?-1:a.date>b.date?1:0);day('2026-11-26').train=true}
+  S.seed1126t=1;save()}
 render();
 BOOT=false;if(ghTok())syncNow();
 if('serviceWorker' in navigator&&location.protocol==='https:')navigator.serviceWorker.register('sw.js').catch(()=>{});
